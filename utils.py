@@ -14,4 +14,6 @@ _level = logging.DEBUG
 handlers = [logging.StreamHandler(sys.stdout)]
 
 logging.basicConfig(format=_format, datefmt=_datefmt, level=_level, handlers=handlers)
-KLine = ['1min', '5min', '15min', '30min', '60min', '1day', '1mon', '1week', '1year']
+SYMBOL = {'ethbtc', 'ltcbtc', 'etcbtc', 'bchbtc'}
+PERIOD = {'1min', '5min', '15min', '30min', '60min', '1day', '1mon', '1week', '1year'}
+DEPTH = {0: 'step0', 1: 'step1', 2: 'step2', 3: 'step3', 4: 'step4', 5: 'step5'}
