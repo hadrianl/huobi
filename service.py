@@ -14,6 +14,7 @@ import utils as u
 from utils import logger
 from threading import Thread, Condition, Lock
 import datetime as dt
+from dateutil import parser
 
 
 
@@ -42,14 +43,14 @@ class HBWebsocket():
             if msg['status'] == 'ok':
                 if 'subbed' in msg:
                     self.sub_list.add(msg['subbed'])
-                    logger.info(f'<订阅>Topic:{msg["subbed"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg.get("ts", 100000) / 1000)} #{msg["id"]}#')
+                    logger.info(f'<订阅>Topic:{msg["subbed"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["id"]}#')
                 elif 'unsubbed' in msg:
                     self.sub_list.remove(msg['unsubbed'])
-                    logger.info(f'<订阅>Topic:{msg["subbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg.get("ts", 100000) / 1000)} #{msg["id"]}#')
+                    logger.info(f'<订阅>Topic:{msg["subbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"]  / 1000)} #{msg["id"]}#')
                 elif 'rep' in msg:
                     logger.info(f'<请求>Topic:{msg["rep"]}请求数据成功 #{msg["id"]}#')
             elif msg['status'] == 'error':
-                logger.error(f'<错误>{msg.get("id")}-Time:{dt.datetime.fromtimestamp(msg.get("ts", 100000) / 1000)} ErrCode:{msg.get("err-code")} ErrMsg:{msg.get("err-msg")}')
+                logger.error(f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}')
         else:
             # logger.info(f'{msg}')
             self.pub_msg(msg)
@@ -65,10 +66,10 @@ class HBWebsocket():
         logger.error(error)
 
     def on_close(self, ws):
-        logger.info(f'已断开与{self._addr}的连接')
+        logger.info(f'<连接>已断开与{self._addr}的连接')
 
     def on_open(self, ws):
-        logger.info(f'建立与{self._addr}的连接')
+        logger.info(f'<连接>建立与{self._addr}的连接')
 
     def register_handler(self, handler, topic):  # 注册handler
         if topic not in self.handlers:
@@ -137,6 +138,31 @@ class HBWebsocket():
             msg = {'unsub': f'market.{symbol}.trade.detail', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>tick-发送取消订阅请求*{symbol}* #{_id}#')
+
+    def rep_kline(self, symbol, period, _id='', **kwargs):
+        if self._check_info(symbol=symbol, period=period):
+            msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
+            if 'from' in kwargs:
+                _from = parser.parse(kwargs['from']) if isinstance(kwargs['from'], str) else kwargs['from']
+                msg.update({'from': _from})
+            if 'to' in kwargs:
+                _to = parser.parse(kwargs['to']) if isinstance(kwargs['to'], str) else kwargs['to']
+                msg.update({'to': _to})
+            self.send_message(msg)
+            logger.info(f'<请求>kline-发送请求*{symbol}*@{period} #{_id}#')
+
+    def rep_depth(self, symbol, depth=0, _id=''):
+        if self._check_info(symbol=symbol, depth=depth):
+            msg = {'req': f'market.{symbol}.depth.{u.DEPTH[depth]}', 'id': _id}
+            self.send_message(msg)
+            logger.info(f'<请求>depth-发送请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
+
+    def rep_tick(self, symbol, _id=''):
+        if self._check_info(symbol=symbol):
+            msg = {'rep': f'market.{symbol}.trade.detail', 'id': _id}
+            self.send_message(msg)
+            logger.info(f'<请求>tick-发送请求*{symbol}* #{_id}#')
+
 
     def run(self):
         if not hasattr(self, 'ws_thread') or not self.ws_thread.is_alive():
