@@ -19,7 +19,7 @@ hb.run()  # 开启websocket进程
 
 ### Restful API
 - restapi需要先用`setKey`设置密钥
-- 默认交易和行情url都是[https://api.huobi.br.com]（调试用）,实盘要设置url用`from huobitrade import setUrl`
+- 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要设置url用`from huobitrade import setUrl`
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
