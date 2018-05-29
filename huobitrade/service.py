@@ -5,13 +5,12 @@
 # @File    : service.py
 # @Contact   : 137150224@qq.com
 
-import logging
 import websocket as ws
 import gzip as gz
 import json
 from queue import Queue
 from . import utils as u
-from .utils import logger, api_key_get, api_key_post, http_get_request, http_post_request
+from .utils import logger, api_key_get, api_key_post, http_get_request
 from threading import Thread
 import datetime as dt
 from dateutil import parser
@@ -609,7 +608,7 @@ if __name__ == '__main__':
     hb.run()
     time.sleep(1)
     hb.sub_kline('ethbtc', '1min')
-    from handler import DBHandler
+    from huobitrade.handler import DBHandler
     handler = DBHandler()
     hb.register_handler(handler, 'market.ethbtc.kline.1min')
     api = HBRestAPI()

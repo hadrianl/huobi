@@ -7,14 +7,14 @@
 
 from setuptools import setup, find_packages
 
-with open("README.md", "r") as rm:
+with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()
 
 requires = ['websocket-client',
             'requests',
             'pymongo']
 
-setup(name='huobi_trade',
+setup(name='huobitrade',
       version='0.1.0',
       description='huobi_api for python',
       long_description=long_description,
