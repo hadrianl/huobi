@@ -46,6 +46,11 @@ def setKey(access_key, secret_key):
     ACCESS_KEY = access_key
     SECRET_KEY = secret_key
 
+def setUrl(market_url, trade_url):
+    global MARKET_URL, TRADE_URL
+    MARKET_URL = market_url
+    TRADE_URL = trade_url
+
 def createSign(pParams, method, host_url, request_path, secret_key):  # from 火币demo, 构造签名
     sorted_params = sorted(pParams.items(), key=lambda d: d[0], reverse=False)
     encode_params = urllib.parse.urlencode(sorted_params)

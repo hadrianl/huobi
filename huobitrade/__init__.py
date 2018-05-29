@@ -4,3 +4,5 @@
 # @Author  : Hadrianl 
 # @File    : __init__.py
 # @Contact   : 137150224@qq.com
+
+from .utils import setKey, setUrl
