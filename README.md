@@ -3,16 +3,23 @@
 - restful api基本参照火币网的demo封装HBRestAPI
 - 没有test和debug，估计含有巨量的BUG，慎用！
 
-## WebSocket API
+# Installation
+```sh
+pip install huobitrade
+```
+
+## Usage
+
+### WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
-hb=HBWebsocket()  # 可以填入url参数，默认是https://api.huobi.br.com
+hb = HBWebsocket()  # 可以填入url参数，默认是https://api.huobi.br.com
 hb.run()  # 开启websocket进程
 ```
 
-## Restful API
+### Restful API
 - restapi需要先用`setKey`设置密钥
-- 默认交易和行情url都是https://api.huobi.br.com（调试用）,实盘要设置url用`from huobitrade import setUrl`
+- 默认交易和行情url都是[https://api.huobi.br.com]（调试用）,实盘要设置url用`from huobitrade import setUrl`
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
@@ -21,7 +28,7 @@ api = HBRestAPI()
 print(api.get_timestamp())
 ```
 
-## Message Handler
+### Message Handler
 ```python
 from huobitrade.handler import baseHandler
 
