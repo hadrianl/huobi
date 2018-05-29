@@ -23,7 +23,7 @@ class HBWebsocket():
         self._addr = addr
         self.msg_queue = Queue()
         self.sub_list = set()
-        self.handlers = {}
+        self.__handlers = {}
 
     # def on_data(self, ws, data, data_type, flag):
     #     print(data)
@@ -60,7 +60,7 @@ class HBWebsocket():
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')
 
-            for h in self.handlers.get(topic, []):
+            for h in self.__handlers.get(topic, []):
                 h(msg)
 
     def on_error(self, ws, error):
@@ -73,17 +73,21 @@ class HBWebsocket():
         logger.info(f'<连接>建立与{self._addr}的连接')
 
     def register_handler(self, handler, topic):  # 注册handler
-        if topic not in self.handlers:
-            self.handlers[topic] = []
-        self.handlers[topic].append(handler)
+        if topic not in self.__handlers:
+            self.__handlers[topic] = []
+        self.__handlers[topic].append(handler)
         handler.start()
 
     def unregister_handler(self, handler, topic):  #
-        if handler in self.handlers.get(topic, []):
-            self.handlers.pop(handler)
+        if handler in self.__handlers.get(topic, []):
+            self.__handlers.pop(handler)
 
-        if self.handlers.get(topic) == []:
-            self.handlers.pop(topic)
+        if self.__handlers.get(topic) == []:
+            self.__handlers.pop(topic)
+
+    @property
+    def handlers(self):
+        return self.__handlers
 
     @staticmethod
     def _check_info(**kwargs):

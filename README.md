@@ -1,7 +1,8 @@
 # 火币API的Python版
-- websocket封装成HBWebsocket类，用`run`开启连接线程
-- restful api基本参照火币网的demo封装HBRestAPI
-- 没有test和debug，估计含有巨量的BUG，慎用！
+- websocket封装成`HBWebsocket`类，用`run`开启连接线程
+- `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过pub_msg来分发到个各topic下的Handler线程来处理
+- restful api基本参照火币网的demo封装成`HBRestAPI`类
+- 没有test和debug，估计含有巨量的<font color=red>BUG</font>，慎用！
 
 ## Installation
 ```sh
@@ -29,6 +30,7 @@ print(api.get_timestamp())
 ```
 
 ### Message Handler
+- handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 ```python
 from huobitrade.handler import baseHandler
 
@@ -42,4 +44,10 @@ class MyHandler(baseHandler):
 
 handler = MyHandler()
 hb.register_handler(handler, 'market.ethbtc.kline.1min')  # 通过register来把handler注册到相应的topic
+```
+- 内置实现了一个mongodb的`DBHandler`
+```python
+from huobitrade.handler import DBHandler
+handler = DBHandler()
+hb.register_handler(handler, 'market.ethbtc.kline.1min')
 ```
