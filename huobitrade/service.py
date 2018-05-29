@@ -79,8 +79,29 @@ class HBWebsocket():
         handler.start()
 
     def unregister_handler(self, handler, topic):  #
-        if handler in self.__handlers.get(topic, []):
-            self.__handlers.pop(handler)
+        handler_list = self.__handlers.get(topic, [])
+        for i, h in enumerate(handler_list):
+            if h is handler:
+                handler_list.pop(i)
+
+        if self.__handlers.get(topic) == []:
+            self.__handlers.pop(topic)
+
+    def register_handle_func(self, topic):  # 注册handler
+
+        def _wrapper(_handle_func):
+            if topic not in self.__handlers:
+                self.__handlers[topic] = []
+            self.__handlers[topic].append(_handle_func)
+            return _handle_func
+
+        return _wrapper
+
+    def unregister_handle_func(self, _handle_func_name, topic):  #
+        handler_list = self.__handlers.get(topic, [])
+        for i, h in enumerate(handler_list):
+            if h is _handle_func_name:
+                handler_list.pop(i)
 
         if self.__handlers.get(topic) == []:
             self.__handlers.pop(topic)
@@ -615,6 +636,10 @@ if __name__ == '__main__':
     from huobitrade.handler import DBHandler
     handler = DBHandler()
     hb.register_handler(handler, 'market.ethbtc.kline.1min')
+    @hb.register_handle_func('market.ethbtc.kline.1min')
+    def handle(msg):
+        print('handle:', msg)
+
     api = HBRestAPI()
     print(api.get_timestamp())
 
