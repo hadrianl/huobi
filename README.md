@@ -14,8 +14,18 @@ pip install huobitrade
 ### WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
+
 hb = HBWebsocket()  # 可以填入url参数，默认是https://api.huobi.br.com
 hb.run()  # 开启websocket进程
+
+# --------------------------------------------
+hb.sub_kline('ethbtc', '1min')  # 订阅数据
+@hb.register_handle_func('market.ethbtc.kline.1min')  # 注册一个处理函数，最好的处理方法应该是实现一个handler
+def handle(msg):
+    print('handle:', msg)
+
+hb.unregister_handle_func(handle, 'market.ethbtc.kline.1min')  # 释放处理函数
+
 ```
 
 ### Restful API
@@ -24,6 +34,7 @@ hb.run()  # 开启websocket进程
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
+
 setKey('your acess_key', 'you secret_key')
 api = HBRestAPI()
 print(api.get_timestamp())
