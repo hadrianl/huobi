@@ -3,7 +3,7 @@
 - restful api基本参照火币网的demo封装HBRestAPI
 - 没有test和debug，估计含有巨量的BUG，慎用！
 
-# Installation
+## Installation
 ```sh
 pip install huobitrade
 ```
