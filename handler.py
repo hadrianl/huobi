@@ -6,34 +6,37 @@
 # @Contact   : 137150224@qq.com
 
 import pymongo as pmo
-from utils import logger
+from .utils import logger
 from threading import Thread
-from queue import Queue
+from queue import Queue,Empty
 from abc import abstractmethod
 
 class baseHandler():
-    def __init__(self):
-        self.thread = Thread(target=self.run)
+    def __init__(self, name):
+        self.name = name
+        self.thread = Thread()
         self.queue = Queue()
-        self._alive = False
 
     def run(self):
-        while self._alive:
+        while True:
             try:
-                msg = self.queue.get()
+                msg = self.queue.get(timeout=5)
+                if msg == None:  # 向队列传入None来作为结束信号
+                    break
                 self.handle(msg)
+            except Empty:
+                ...
             except Exception as e:
-                print(e)
+                logger.exception(f'<Handler>-{self.name} exception:{e}')
 
     def stop(self):
-        if self.thread.is_alive():
-            self._alive = False
-            self.join()
+        self.queue.put(None)
+        self.thread.join()
 
     def start(self):
-        if not self.thread.is_alive():
-            self._alive = True
-            self.thread.start()
+        self.thread = Thread(target=self.run, name=self.name)
+        self.thread.setDaemon(True)
+        self.thread.start()
 
     @abstractmethod
     def handle(self, msg):  # 所有handler需要重写这个函数
@@ -47,7 +50,7 @@ class baseHandler():
 class DBHandler(pmo.MongoClient, baseHandler):
     def __init__(self, host='localhost', port=27017, db='HuoBi'):
         pmo.MongoClient.__init__(self, host, port)
-        baseHandler.__init__(self)
+        baseHandler.__init__(self, name='DB')
         self.db = self.get_database(db)
 
     def into_db(self, data, topic:str):

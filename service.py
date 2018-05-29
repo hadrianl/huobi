@@ -10,15 +10,15 @@ import websocket as ws
 import gzip as gz
 import json
 from queue import Queue
-import utils as u
-from utils import logger, api_key_get, api_key_post, http_get_request, http_post_request
-from threading import Thread, Condition, Lock
+from . import utils as u
+from .utils import logger, api_key_get, api_key_post, http_get_request, http_post_request
+from threading import Thread
 import datetime as dt
 from dateutil import parser
 
 
 
-logger.debug('TESTING')
+logger.debug(f'<TESTING>LOG_TESTING')
 class HBWebsocket():
     def __init__(self, addr='wss://api.huobi.br.com/ws'):
         self._addr = addr
@@ -26,10 +26,10 @@ class HBWebsocket():
         self.sub_list = set()
         self.handlers = {}
 
-    def on_data(self, ws, data, data_type, flag):
-        print(data)
-        print(data_type)
-        print(flag)
+    # def on_data(self, ws, data, data_type, flag):
+    #     print(data)
+    #     print(data_type)
+    #     print(flag)
 
     def send_message(self, msg):
         msg_json = json.dumps(msg).encode()
@@ -65,7 +65,7 @@ class HBWebsocket():
                 h(msg)
 
     def on_error(self, ws, error):
-        logger.error(error)
+        logger.error(f'<错误>on_error:{error}')
 
     def on_close(self, ws):
         logger.info(f'<连接>已断开与{self._addr}的连接')
@@ -612,4 +612,7 @@ if __name__ == '__main__':
     from handler import DBHandler
     handler = DBHandler()
     hb.register_handler(handler, 'market.ethbtc.kline.1min')
+    api = HBRestAPI()
+    print(api.get_timestamp())
+
 

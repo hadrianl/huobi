@@ -22,7 +22,7 @@ _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
 _level = logging.DEBUG
 
-handlers = [logging.StreamHandler(sys.stdout)]
+handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler('huobi.log')]
 
 logging.basicConfig(format=_format, datefmt=_datefmt, level=_level, handlers=handlers)
 logger = logging.getLogger('HuoBi')
@@ -42,7 +42,12 @@ TRADE_URL = 'https://api.huobi.br.com'
 
 ACCOUNT_ID = None
 
-def createSign(pParams, method, host_url, request_path, secret_key):
+def setKey(access_key, secret_key):
+    global ACCESS_KEY, SECRET_KEY
+    ACCESS_KEY = access_key
+    SECRET_KEY = secret_key
+
+def createSign(pParams, method, host_url, request_path, secret_key):  # from 火币demo, 构造签名
     sorted_params = sorted(pParams.items(), key=lambda d: d[0], reverse=False)
     encode_params = urllib.parse.urlencode(sorted_params)
     payload = [method, host_url, request_path, encode_params]
@@ -56,7 +61,7 @@ def createSign(pParams, method, host_url, request_path, secret_key):
     return signature
 
 
-def http_get_request(url, params, add_to_headers=None):
+def http_get_request(url, params, add_to_headers=None):  # from 火币demo, get方法
     headers = {
         'Content-type': 'application/x-www-form-urlencoded',
         'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36',
@@ -72,11 +77,11 @@ def http_get_request(url, params, add_to_headers=None):
         else:
             return
     except BaseException as e:
-        logger.exception("httpGet failed, detail is:%s,%s" % (response.text, e))
+        logger.exception(f'<GET>httpGet failed, detail is:{response.text},{e}')
         return
 
 
-def http_post_request(url, params, add_to_headers=None):
+def http_post_request(url, params, add_to_headers=None):  # from 火币demo, post方法
     headers = {
         "Accept": "application/json",
         'Content-Type': 'application/json'
@@ -92,11 +97,11 @@ def http_post_request(url, params, add_to_headers=None):
         else:
             return
     except BaseException as e:
-        logger.exception("httpPost failed, detail is:%s,%s" % (response.text, e))
+        logger.exception(f'<POST>httpPost failed, detail is:{response.text},{e}')
         return
 
 
-def api_key_get(params, request_path):
+def api_key_get(params, request_path):  # from 火币demo, 构造get请求并调用get方法
     method = 'GET'
     timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     params.update({'AccessKeyId': ACCESS_KEY,
@@ -113,7 +118,7 @@ def api_key_get(params, request_path):
     return http_get_request(url, params)
 
 
-def api_key_post(params, request_path):
+def api_key_post(params, request_path):  # from 火币demo, 构造post请求并调用post方法
     method = 'POST'
     timestamp = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
     params_to_sign = {'AccessKeyId': ACCESS_KEY,
