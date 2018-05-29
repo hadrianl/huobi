@@ -7,7 +7,6 @@
 
 import logging
 import sys
-import pymongo as pmo
 import base64
 import datetime
 import hashlib
