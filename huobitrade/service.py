@@ -213,23 +213,6 @@ class HBRestAPI():
     def __init__(self):
         self.acct_id = self.get_accounts()['data'][0]['id']
 
-    def d_get_kline(self, symbol, period, size=150):
-        """
-        :param symbol
-        :param period: 可选值：{1min, 5min, 15min, 30min, 60min, 1day, 1mon, 1week, 1year }
-        :param size: 可选值： [1,2000]
-        :return:
-        """
-        params = {'symbol': symbol,
-                  'period': period,
-                  'size': size}
-        url = u.MARKET_URL + '/market/history/kline'
-        def _wrapper(_func):
-            @wraps(_func)
-            def handle():
-                _func(http_get_request(url, params))
-            return handle
-        return _wrapper
     # 获取KLine
     def get_kline(self, symbol, period, size=150):
         """
