@@ -40,6 +40,22 @@ api = HBRestAPI()
 print(api.get_timestamp())
 ```
 
+### Restful API-Decoration    （Experimental）
+- 用装饰器来初始化回调处理函数
+```python
+from huobitrade.service import HBRestAPI_DEC
+from huobitrade import setKey
+
+setKey('your acess_key', 'you secret_key')
+api_dec = HBRestAPI_DEC()
+@api_dec.get_kline('ethbtc', '1min')  # 装饰器初始化处理函数
+def handle_func(msg):
+    print('handle:', msg)
+
+handle_func()  # __call__调用函数会请求并用handle_func做回调处理
+
+```
+
 ### Message Handler
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 ```python
