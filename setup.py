@@ -15,7 +15,7 @@ requires = ['websocket-client',
             'pymongo']
 
 setup(name='huobitrade',
-      version='0.1.1',
+      version='0.1.3',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",
