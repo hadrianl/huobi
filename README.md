@@ -4,6 +4,10 @@
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
 - 没有test和debug，估计含有巨量的<font color=red>BUG</font>，慎用！
 
+
+[![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
+
+
 ## Installation
 ```sh
 pip install huobitrade
