@@ -6,6 +6,7 @@
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
+![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
 
 
 ## Installation
