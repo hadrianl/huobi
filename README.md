@@ -2,12 +2,12 @@
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过pub_msg来分发到个各topic下的Handler线程来处理
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
-- 没有test和debug，估计含有巨量的<font color=red>BUG</font>，慎用！
+- 没有test和debug，估计含有巨量的<font color="red">BUG</font>，慎用！
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
-![PyPI - License](https://img.shields.io/pypi/l/huobitrade.svg)
+![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
 
 
