@@ -114,9 +114,6 @@ class HBWebsocket():
     @staticmethod
     def _check_info(**kwargs):
         log = []
-        if 'symbol' in kwargs and kwargs['symbol'] not in u.SYMBOL:
-            log.append(f'<验证>不存在Symbol:{symbol}')
-
         if 'period' in kwargs and kwargs['period'] not in u.PERIOD:
             log.append(f'<验证>不存在Period:{period}')
 
@@ -280,7 +277,7 @@ class HBRestAPI():
         """
         assert site in ['Pro', 'HADAX']
         params = {}
-        path = f'/v1/{"common" if site == "Pro" else "hadax"}/symbols'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/symbols'
         return api_key_get(params, path)
 
     def get_currencys(self, site='Pro'):
@@ -290,7 +287,7 @@ class HBRestAPI():
         """
         assert site in ['Pro', 'HADAX']
         params = {}
-        path = f'/v1/{"common" if site == "Pro" else "hadax"}/currencys'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/currencys'
         return api_key_get(params, path)
 
     def get_timestamp(self):
@@ -317,7 +314,7 @@ class HBRestAPI():
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax"}account/accounts/{self.acct_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acct_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
         return api_key_get(params, path)
@@ -344,7 +341,7 @@ class HBRestAPI():
         if price:
             params['price'] = price
 
-        path = f'/v1{"/" if site == "Pro" else "/hadax"}order/orders/place'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}order/orders/place'
         return api_key_post(params, path)
 
     # 撤销订单
@@ -723,7 +720,7 @@ class HBRestAPI_DEC():
         """
         assert site in ['Pro', 'HADAX']
         params = {}
-        path = f'/v1/{"common" if site == "Pro" else "hadax"}/symbols'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/symbols'
 
         def _wrapper(_func):
             @wraps(_func)
@@ -739,7 +736,7 @@ class HBRestAPI_DEC():
         """
         assert site in ['Pro', 'HADAX']
         params = {}
-        path = f'/v1/{"common" if site == "Pro" else "hadax"}/currencys'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/currencys'
 
         def _wrapper(_func):
             @wraps(_func)
@@ -784,7 +781,7 @@ class HBRestAPI_DEC():
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax"}account/accounts/{self.acct_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acct_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
 
@@ -817,7 +814,7 @@ class HBRestAPI_DEC():
         if price:
             params['price'] = price
 
-        path = f'/v1{"/" if site == "Pro" else "/hadax"}order/orders/place'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}order/orders/place'
 
         def _wrapper(_func):
             @wraps(_func)
