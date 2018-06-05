@@ -23,8 +23,10 @@ class HBWebsocket():
     def __init__(self, addr='wss://api.huobi.br.com/ws'):
         self._addr = addr
         self.msg_queue = Queue()
-        self.sub_list = set()
+        self.sub_dict = {}
         self.__handlers = {}
+        self._active = False
+        self._reconn = 0
 
     # def on_data(self, ws, data, data_type, flag):
     #     print(data)
@@ -44,11 +46,11 @@ class HBWebsocket():
         elif 'status' in msg:
             if msg['status'] == 'ok':
                 if 'subbed' in msg:
-                    self.sub_list.add(msg['subbed'])
+                    self.sub_dict.update({msg['subbed']:{'topic': msg['subbed'], 'id': msg['id']}})
                     logger.info(f'<订阅>Topic:{msg["subbed"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["id"]}#')
                 elif 'unsubbed' in msg:
-                    self.sub_list.remove(msg['unsubbed'])
-                    logger.info(f'<订阅>Topic:{msg["subbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"]  / 1000)} #{msg["id"]}#')
+                    self.sub_dict.pop(msg['unsubbed'])
+                    logger.info(f'<订阅>Topic:{msg["unsubbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"]  / 1000)} #{msg["id"]}#')
                 elif 'rep' in msg:
                     logger.info(f'<请求>Topic:{msg["rep"]}请求数据成功 #{msg["id"]}#')
             elif msg['status'] == 'error':
@@ -69,9 +71,19 @@ class HBWebsocket():
 
     def on_close(self, ws):
         logger.info(f'<连接>已断开与{self._addr}的连接')
+        if self._active and self._reconn < 10:
+            logger.info(f'<连接>尝试与{self._addr}进行重连')
+            self.run()
+            self._reconn += 1
+            time.sleep(self._reconn)
 
     def on_open(self, ws):
         logger.info(f'<连接>建立与{self._addr}的连接')
+        for topic, subbed in self.sub_dict.items():
+            msg = {'sub': subbed['topic'], 'id': subbed['id']}
+            self.send_message(msg)
+        else:
+            logger.info(f'<订阅>初始化订阅完成')
 
     def register_handler(self, handler, topic):  # 注册handler
         if topic not in self.__handlers:
@@ -197,13 +209,15 @@ class HBWebsocket():
                                       on_close=self.on_close,
                                       # on_data=self.on_data
                                       )
-            self.ws_thread = Thread(target=self.ws.run_forever)
+            self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
             self.ws_thread.start()
+            self._active = True
 
     def stop(self):
         if hasattr(self, 'ws_thread') and self.ws_thread.is_alive():
             self.ws.close()
             self.ws_thread.join()
+            self._active = False
 
 
 class HBRestAPI():

@@ -14,7 +14,7 @@ from abc import abstractmethod
 class baseHandler():
     def __init__(self, name):
         self.name = name
-        self.thread = Thread()
+        self.thread = Thread(name=self.name)
         self.queue = Queue()
 
     def run(self):
