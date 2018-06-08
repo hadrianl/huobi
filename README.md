@@ -68,11 +68,13 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 ```python
 from huobitrade.handler import baseHandler
+fromm huobitrade.util import handler_profiler
 
 class MyHandler(baseHandler):
     def __init__(self, topic, *args, **kwargs):
         baseHandler.__init__(self, 'just Thread name', topic)
 
+    @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
     def handle(self, msg):  # 实现handle来处理websocket推送的msg
         print(msg)
 
