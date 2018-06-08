@@ -24,8 +24,9 @@ class HBWebsocket():
     def __init__(self, addr='wss://api.huobi.br.com/ws'):
         self._addr = addr
         self.msg_queue = Queue()
-        self.sub_dict = {}
-        self.__handlers = {}
+        self.sub_dict = {}  # 订阅列表
+        self.__handlers = []  # 对message做处理的处理函数或处理类
+        self.__handle_funcs = {}
         self._active = False
         self._reconn = 0
 
@@ -34,11 +35,11 @@ class HBWebsocket():
     #     print(data_type)
     #     print(flag)
 
-    def send_message(self, msg):
+    def send_message(self, msg):  # 发送消息
         msg_json = json.dumps(msg).encode()
         self.ws.send(msg_json)
 
-    def on_message(self, ws, _msg):
+    def on_message(self, ws, _msg):  # 接收ws的消息推送并处理，包括了pingpong，处理订阅列表，以及处理数据推送
         json_data = gz.decompress(_msg).decode()
         msg = json.loads(json_data)
         if 'ping' in msg:
@@ -60,12 +61,15 @@ class HBWebsocket():
             # logger.info(f'{msg}')
             self.pub_msg(msg)
 
-    def pub_msg(self, msg):
-        if 'ch' in msg or 'rep' in msg:
-            topic = msg.get('ch') or msg.get('rep')
+    def pub_msg(self, msg):  # 核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列
+            for hr in self.__handlers:
+                hr(msg)
 
-            for h in self.__handlers.get(topic, []):
-                h(msg)
+            if 'ch' in msg or 'rep' in msg:
+                topic = msg.get('ch') or msg.get('rep')
+                for h in self.__handle_funcs.get(topic, []):
+                    h(msg)
+
 
     def on_error(self, ws, error):
         logger.error(f'<错误>on_error:{error}')
@@ -74,7 +78,7 @@ class HBWebsocket():
         logger.info(f'<连接>已断开与{self._addr}的连接')
         if self._active and self._reconn < 10:
             logger.info(f'<连接>尝试与{self._addr}进行重连')
-            self.run()
+            self.__start()
             self._reconn += 1
             time.sleep(self._reconn)
 
@@ -86,43 +90,42 @@ class HBWebsocket():
         else:
             logger.info(f'<订阅>初始化订阅完成')
 
-    def register_handler(self, handler, topic):  # 注册handler
-        if topic not in self.__handlers:
-            self.__handlers[topic] = []
-        self.__handlers[topic].append(handler)
-        handler.start()
+    def register_handler(self, handler):  # 注册handler
+        if handler not in self.__handlers:
+            self.__handlers.append(handler)
+            handler.start()
 
-    def unregister_handler(self, handler, topic):  #
-        handler_list = self.__handlers.get(topic, [])
-        for i, h in enumerate(handler_list):
-            if h is handler:
-                handler_list.pop(i)
+    def unregister_handler(self, handler):  # 注销handler
+        if handler in self.__handlers:
+            self.__handlers.remove(handler)
+            handler.stop()
 
-        if self.__handlers.get(topic) == []:
-            self.__handlers.pop(topic)
-
-    def register_handle_func(self, topic):  # 注册handler
+    def register_handle_func(self, topic):  # 注册handle_func
 
         def _wrapper(_handle_func):
-            if topic not in self.__handlers:
-                self.__handlers[topic] = []
-            self.__handlers[topic].append(_handle_func)
+            if topic not in self.__handle_funcs:
+                self.__handle_funcs[topic] = []
+            self.__handle_funcs[topic].append(_handle_func)
             return _handle_func
 
         return _wrapper
 
-    def unregister_handle_func(self, _handle_func_name, topic):  #
-        handler_list = self.__handlers.get(topic, [])
+    def unregister_handle_func(self, _handle_func_name, topic):  # 注销handle_func
+        handler_list = self.__handle_funcs.get(topic, [])
         for i, h in enumerate(handler_list):
             if h is _handle_func_name:
                 handler_list.pop(i)
 
-        if self.__handlers.get(topic) == []:
-            self.__handlers.pop(topic)
+        if self.__handle_funcs.get(topic) == []:
+            self.__handle_funcs.pop(topic)
 
     @property
     def handlers(self):
         return self.__handlers
+
+    @property
+    def handle_funs(self):
+        return self.__handle_funcs
 
     @staticmethod
     def _check_info(**kwargs):
@@ -203,16 +206,19 @@ class HBWebsocket():
 
     def run(self):
         if not hasattr(self, 'ws_thread') or not self.ws_thread.is_alive():
-            self.ws = ws.WebSocketApp(self._addr,
-                                      on_open=self.on_open,
-                                      on_message=self.on_message,
-                                      on_error=self.on_error,
-                                      on_close=self.on_close,
-                                      # on_data=self.on_data
-                                      )
-            self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
-            self.ws_thread.start()
-            self._active = True
+            self.__start()
+
+    def __start(self):
+        self.ws = ws.WebSocketApp(self._addr,
+                                  on_open=self.on_open,
+                                  on_message=self.on_message,
+                                  on_error=self.on_error,
+                                  on_close=self.on_close,
+                                  # on_data=self.on_data
+                                  )
+        self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
+        self.ws_thread.start()
+        self._active = True
 
     def stop(self):
         if hasattr(self, 'ws_thread') and self.ws_thread.is_alive():

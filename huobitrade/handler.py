@@ -6,14 +6,15 @@
 # @Contact   : 137150224@qq.com
 
 import pymongo as pmo
-from .utils import logger
+from .utils import logger, handler_profiler
 from threading import Thread
 from queue import Queue,Empty
 from abc import abstractmethod
 
 class baseHandler():
-    def __init__(self, name):
+    def __init__(self, name, topic: (str, list)=None):
         self.name = name
+        self.topic = set(topic if isinstance(topic, list) else [topic]) if topic !=None else set()
         self.thread = Thread(name=self.name)
         self.queue = Queue()
 
@@ -23,15 +24,29 @@ class baseHandler():
                 msg = self.queue.get(timeout=5)
                 if msg == None:  # 向队列传入None来作为结束信号
                     break
-                self.handle(msg)
+
+                if self.topic == set():
+                    self.handle(msg)
+                else:
+                    topic = msg.get('ch') or msg.get('rep')
+                    print(topic)
+                    if topic and topic in self.topic:
+                        self.handle(msg)
             except Empty:
                 ...
             except Exception as e:
                 logger.exception(f'<Handler>-{self.name} exception:{e}')
 
+    def add_topic(self, new_topic):
+        self.topic.add(new_topic)
+
+    def remove_topic(self, topic):
+        self.topic.remove(topic)
+
     def stop(self):
         self.queue.put(None)
         self.thread.join()
+        self.queue = Queue()
 
     def start(self):
         self.thread = Thread(target=self.run, name=self.name)
@@ -47,10 +62,10 @@ class baseHandler():
             self.queue.put(msg)
 
 
-class DBHandler(pmo.MongoClient, baseHandler):
-    def __init__(self, host='localhost', port=27017, db='HuoBi'):
+class DBHandler(baseHandler, pmo.MongoClient):
+    def __init__(self, topic=None, host='localhost', port=27017, db='HuoBi'):
+        baseHandler.__init__(self, 'DB', topic)
         pmo.MongoClient.__init__(self, host, port)
-        baseHandler.__init__(self, name='DB')
         self.db = self.get_database(db)
 
     def into_db(self, data, topic:str):
@@ -68,6 +83,7 @@ class DBHandler(pmo.MongoClient, baseHandler):
         except Exception as e:
             logger.error(f'<数据>插入数据库错误-{e}')
 
+    @handler_profiler
     def handle(self, msg):
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')

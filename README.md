@@ -70,19 +70,22 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 from huobitrade.handler import baseHandler
 
 class MyHandler(baseHandler):
-    def __init__(self, *args, **kwargs):
-        baseHandler.__init__(self, name='just Thread name')
+    def __init__(self, topic, *args, **kwargs):
+        baseHandler.__init__(self, 'just Thread name', topic)
 
     def handle(self, msg):  # 实现handle来处理websocket推送的msg
         print(msg)
 
 
-handler = MyHandler()
-hb.register_handler(handler, 'market.ethbtc.kline.1min')  # 通过register来把handler注册到相应的topic
+handler = MyHandler('market.ethbtc.kline.1min')  # topic为str或者list
+handler.add_topic('market.ethbtc.kline.5min')  # 为handler增加处理topic(remove_topic来删除)
+hb.register_handler(handler)  # 通过register来把handler注册到相应的topic
+
+
 ```
 - 内置实现了一个mongodb的`DBHandler`
 ```python
 from huobitrade.handler import DBHandler
-handler = DBHandler()
-hb.register_handler(handler, 'market.ethbtc.kline.1min')
+handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
+hb.register_handler(handler)
 ```
