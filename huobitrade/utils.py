@@ -16,6 +16,8 @@ import urllib
 import urllib.parse
 import urllib.request
 import requests
+from functools import wraps
+import time
 
 _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
@@ -136,3 +138,12 @@ def api_key_post(params, request_path):  # from 火币demo, 构造post请求并�
     params_to_sign['Signature'] = createSign(params_to_sign, method, host_name, request_path, SECRET_KEY)
     url = host_url + request_path + '?' + urllib.parse.urlencode(params_to_sign)
     return http_post_request(url, params)
+
+def handler_profiler(handle):
+    @wraps(handle)
+    def func(self, msg):
+        t0 = time.time()
+        handle(self, msg)
+        t1 = time.time()
+        print(f'{self.name}-handle运行时间:{t1 - t0}s')
+    return func
