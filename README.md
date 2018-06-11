@@ -2,14 +2,16 @@
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过pub_msg来分发到个各topic下的Handler线程来处理
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
-- 没有test和debug，估计含有巨量的<font color="red">BUG</font>，慎用！
+- 没有test和debug，估计含有巨量的**BUG**，慎用！
+
+## Lastest
+- 消息分发改用zmq来处理，新增针对最新消息推送的优化处理
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
-
 
 
 ## Installation
@@ -90,4 +92,16 @@ hb.register_handler(handler)  # 通过register来把handler注册到相应的top
 from huobitrade.handler import DBHandler
 handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
 hb.register_handler(handler)
+```
+
+### Latest Message Handler
+- 基于handler函数根据策略复杂度和性能的的不同造成对message的处理时间不一样，可能造成快生产慢消费的情况，增加lastest参数，每次都是handle最新的message
+```python
+class MyLatestHandler(baseHandler):
+    def __init__(self, topic, *args, **kwargs):
+        baseHandler.__init__(self, 'just Thread name', topic, latest=True)
+
+    @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
+    def handle(self, msg):  # 实现handle来处理websocket推送的msg
+        print(msg)
 ```

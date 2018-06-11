@@ -6,49 +6,62 @@
 # @Contact   : 137150224@qq.com
 
 import pymongo as pmo
-from .utils import logger, handler_profiler
+from .utils import logger, handler_profiler, zmq_ctx
 from threading import Thread
 from queue import Queue,Empty
 from abc import abstractmethod
+import zmq
+import pickle
 
 class baseHandler():
-    def __init__(self, name, topic: (str, list)=None):
+    def __init__(self, name, topic: (str, list)=None, *args, **kwargs):
         self.name = name
         self.topic = set(topic if isinstance(topic, list) else [topic]) if topic !=None else set()
+        self.ctx = zmq_ctx
+        self.sub_socket = self.ctx.socket(zmq.SUB)
+        self.sub_socket.setsockopt(zmq.RCVTIMEO, 3000)
+
+        if self.topic:
+            for t in self.topic:
+                self.sub_socket.subscribe(t)
+        else:
+            self.sub_socket.subscribe('')
+
+        if kwargs.get('latest', False):  # 可以通过lastest(bool)来订阅最新的数据
+            self.sub_socket.set_hwm(1)
         self.thread = Thread(name=self.name)
-        self.queue = Queue()
+        self.__active = False
 
     def run(self):
-        while True:
+        self.sub_socket.connect('inproc://HBWS')
+        while self.__active:
             try:
-                msg = self.queue.get(timeout=5)
+                # msg = self.queue.get(timeout=5)
+                topic, msg = self.sub_socket.recv_multipart()
                 if msg == None:  # 向队列传入None来作为结束信号
                     break
-
-                if self.topic == set():
-                    self.handle(msg)
-                else:
-                    topic = msg.get('ch') or msg.get('rep')
-                    print(topic)
-                    if topic and topic in self.topic:
-                        self.handle(msg)
-            except Empty:
+                msg = pickle.loads(msg)
+                self.handle(msg)
+            except zmq.error.Again:
                 ...
             except Exception as e:
                 logger.exception(f'<Handler>-{self.name} exception:{e}')
+        self.sub_socket.disconnect('inproc://HBWS')
 
     def add_topic(self, new_topic):
+        self.sub_socket.subscribe(new_topic)
         self.topic.add(new_topic)
 
     def remove_topic(self, topic):
+        self.sub_socket.unsubscribe(topic)
         self.topic.remove(topic)
 
     def stop(self):
-        self.queue.put(None)
+        self.__active = False
         self.thread.join()
-        self.queue = Queue()
 
     def start(self):
+        self.__active = True
         self.thread = Thread(target=self.run, name=self.name)
         self.thread.setDaemon(True)
         self.thread.start()
@@ -56,10 +69,6 @@ class baseHandler():
     @abstractmethod
     def handle(self, msg):  # 所有handler需要重写这个函数
         ...
-
-    def __call__(self, msg):
-        if self.thread.is_alive():
-            self.queue.put(msg)
 
 
 class DBHandler(baseHandler, pmo.MongoClient):

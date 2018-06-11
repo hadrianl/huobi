@@ -10,11 +10,13 @@ import gzip as gz
 import json
 from queue import Queue
 from . import utils as u
-from .utils import logger, api_key_get, api_key_post, http_get_request
+from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx
 from threading import Thread
 import datetime as dt
 from dateutil import parser
 from functools import wraps
+import zmq
+import pickle
 import time
 
 
@@ -23,10 +25,12 @@ logger.debug(f'<TESTING>LOG_TESTING')
 class HBWebsocket():
     def __init__(self, addr='wss://api.huobi.br.com/ws'):
         self._addr = addr
-        self.msg_queue = Queue()
         self.sub_dict = {}  # 订阅列表
         self.__handlers = []  # 对message做处理的处理函数或处理类
         self.__handle_funcs = {}
+        self.ctx = zmq_ctx
+        self.pub_socket = self.ctx.socket(zmq.PUB)
+        self.pub_socket.bind('inproc://HBWS')
         self._active = False
         self._reconn = 0
 
@@ -62,13 +66,13 @@ class HBWebsocket():
             self.pub_msg(msg)
 
     def pub_msg(self, msg):  # 核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列
-            for hr in self.__handlers:
-                hr(msg)
+        if 'ch' in msg:
+            self.pub_socket.send_multipart([msg['ch'].encode(), pickle.dumps(msg)])
 
-            if 'ch' in msg or 'rep' in msg:
-                topic = msg.get('ch') or msg.get('rep')
-                for h in self.__handle_funcs.get(topic, []):
-                    h(msg)
+        if 'ch' in msg or 'rep' in msg:
+            topic = msg.get('ch') or msg.get('rep')
+            for h in self.__handle_funcs.get(topic, []):
+                h(msg)
 
 
     def on_error(self, ws, error):

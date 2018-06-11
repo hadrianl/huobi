@@ -18,6 +18,7 @@ import urllib.request
 import requests
 from functools import wraps
 import time
+import zmq
 
 _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
@@ -35,6 +36,8 @@ ORDER_STATES = {'pre-submitted': '准备提交', 'submitted': '已提交', 'part
                 'partial-canceled': '部分成交撤销', 'filled': '完全成交', 'canceled': '已撤销'}
 ACCESS_KEY = ""
 SECRET_KEY = ""
+
+zmq_ctx = zmq.Context()
 
 
 # API 请求地址
