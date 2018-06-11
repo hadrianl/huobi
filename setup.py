@@ -12,10 +12,11 @@ with open("README.md", "r", encoding='utf-8') as rm:
 
 requires = ['websocket-client',
             'requests',
-            'pymongo']
+            'pymongo',
+            'pyzmq']
 
 setup(name='huobitrade',
-      version='0.1.8',
+      version='0.1.9',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",
