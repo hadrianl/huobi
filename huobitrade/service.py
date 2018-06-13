@@ -10,7 +10,7 @@ import gzip as gz
 import json
 from queue import Queue
 from . import utils as u
-from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx
+from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx, setUrl, setKey
 from threading import Thread
 import datetime as dt
 from dateutil import parser
@@ -23,7 +23,13 @@ import time
 
 logger.debug(f'<TESTING>LOG_TESTING')
 class HBWebsocket():
-    def __init__(self, addr='wss://api.huobi.br.com/ws'):
+    def __init__(self, addr='wss://api.huobi.br.com/ws', reconn=10, interval=3):
+        """
+        火币websocket封装类
+        :param addr: ws地址
+        :param reconn: 断线重连次数, 设为-1为一直重连
+        :param interval: 断线后重连间歇，默认3秒
+        """
         self._addr = addr
         self.sub_dict = {}  # 订阅列表
         self.__handlers = []  # 对message做处理的处理函数或处理类
@@ -32,7 +38,8 @@ class HBWebsocket():
         self.pub_socket = self.ctx.socket(zmq.PUB)
         self.pub_socket.bind('inproc://HBWS')
         self._active = False
-        self._reconn = 0
+        self._reconn = reconn
+        self._interval = interval
 
     # def on_data(self, ws, data, data_type, flag):
     #     print(data)
@@ -80,11 +87,11 @@ class HBWebsocket():
 
     def on_close(self, ws):
         logger.info(f'<连接>已断开与{self._addr}的连接')
-        if self._active and self._reconn < 10:
+        if self._active and self._reconn > 0:
             logger.info(f'<连接>尝试与{self._addr}进行重连')
             self.__start()
-            self._reconn += 1
-            time.sleep(self._reconn)
+            self._reconn -= 1
+            time.sleep(self._interval)
 
     def on_open(self, ws):
         logger.info(f'<连接>建立与{self._addr}的连接')
@@ -232,7 +239,16 @@ class HBWebsocket():
 
 
 class HBRestAPI():
-    def __init__(self):
+    def __init__(self, addrs=None, keys=None):
+        """
+        火币REST API封装
+        :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
+        :param keys: 传入(acess_key, secret_key),可用setKey设置
+        """
+        if addrs:
+            setUrl(*addrs)
+        if keys:
+            setKey(*keys)
         self.acct_id = self.get_accounts()['data'][0]['id']
 
     # 获取KLine
@@ -651,7 +667,16 @@ class HBRestAPI():
         return api_key_get(params, path)
 
 class HBRestAPI_DEC():
-    def __init__(self):
+    def __init__(self, addr=None, key=None):
+        """
+        火币REST API封装decoration版
+        :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
+        :param keys: 传入(acess_key, secret_key),可用setKey设置
+        """
+        if addr:
+            setUrl(*addr)
+        if key:
+            setKey(*key)
         self.acct_id = self.get_accounts()['data'][0]['id']
 
     def get_kline(self, symbol, period, size=150):
