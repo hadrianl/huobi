@@ -22,7 +22,7 @@ import zmq
 
 _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
-_level = logging.DEBUG
+_level = logging.INFO
 
 handlers = [logging.StreamHandler(sys.stdout), logging.FileHandler('huobi.log')]
 
