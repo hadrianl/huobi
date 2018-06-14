@@ -16,7 +16,7 @@ requires = ['websocket-client',
             'pyzmq']
 
 setup(name='huobitrade',
-      version='0.1.9',
+      version='0.2.0',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",

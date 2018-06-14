@@ -239,7 +239,7 @@ class HBWebsocket():
 
 
 class HBRestAPI():
-    def __init__(self, addrs=None, keys=None):
+    def __init__(self, addrs=None, keys=None, get_acc=False):
         """
         火币REST API封装
         :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
@@ -249,11 +249,15 @@ class HBRestAPI():
             setUrl(*addrs)
         if keys:
             setKey(*keys)
-        self.acct_id = self.get_accounts()['data'][0]['id']
+        if get_acc:
+            self.acc_id = self.get_accounts()['data'][0]['id']
 
-    # 获取KLine
+    def set_acc_id(self, acc_id):
+        self.acc_id = acc_id
+
     def get_kline(self, symbol, period, size=150):
         """
+        获取KLine
         :param symbol
         :param period: 可选值：{1min, 5min, 15min, 30min, 60min, 1day, 1mon, 1week, 1year }
         :param size: 可选值： [1,2000]
@@ -266,9 +270,10 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/history/kline'
         return http_get_request(url, params)
 
-    # 获取marketdepth
+
     def get_latest_depth(self, symbol, type):
         """
+         获取marketdepth
         :param symbol
         :param type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
         :return:
@@ -279,9 +284,10 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/depth'
         return http_get_request(url, params)
 
-    # 获取tradedetail
+
     def get_latest_ticker(self, symbol):
         """
+        获取tradedetail
         :param symbol
         :return:
         """
@@ -290,9 +296,23 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/trade'
         return http_get_request(url, params)
 
-    # 获取merge ticker
+    def get_ticker(self, symbol, size=1):
+        """
+        获取历史ticker
+        :param symbol:
+        :param size: 可选[1,2000]
+        :return:
+        """
+        params = {'symbol': symbol,
+                  'size': size}
+
+        url = u.MARKET_URL + '/market/history/trade'
+        return http_get_request(url, params)
+
+
     def get_latest_1m_ohlc(self, symbol):
         """
+        获取最新一分钟的k线
         :param symbol:
         :return:
         """
@@ -301,9 +321,10 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/detail/merged'
         return http_get_request(url, params)
 
-    # 获取 Market Detail 24小时成交量数据
+
     def get_lastest_24H_detail(self, symbol):
         """
+        获取最近24小时的概况
         :param symbol
         :return:
         """
@@ -312,9 +333,12 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/detail'
         return http_get_request(url, params)
 
-    # 获取  支持的交易对
+
     def get_symbols(self, site='Pro'):
         """
+        获取  支持的交易对
+        :param site:
+        :return:
         """
         assert site in ['Pro', 'HADAX']
         params = {}
@@ -323,7 +347,8 @@ class HBRestAPI():
 
     def get_currencys(self, site='Pro'):
         """
-
+        获取所有币种
+        :param site:
         :return:
         """
         assert site in ['Pro', 'HADAX']
@@ -355,7 +380,7 @@ class HBRestAPI():
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acct_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
         return api_key_get(params, path)
@@ -374,7 +399,7 @@ class HBRestAPI():
         """
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
-        params = {'account-id': self.acct_id,
+        params = {'account-id': self.acc_id,
                   'amount': amount,
                   'symbol': symbol,
                   'type': _type,
@@ -561,7 +586,7 @@ class HBRestAPI():
         :return:
         """
 
-        params = {'account-id': self.acct_id,
+        params = {'account-id': self.acc_id,
                   'amount': amount,
                   'symbol': symbol,
                   'type': _type,
@@ -667,7 +692,7 @@ class HBRestAPI():
         return api_key_get(params, path)
 
 class HBRestAPI_DEC():
-    def __init__(self, addr=None, key=None):
+    def __init__(self, addr=None, key=None, get_acc=False):
         """
         火币REST API封装decoration版
         :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
@@ -677,10 +702,15 @@ class HBRestAPI_DEC():
             setUrl(*addr)
         if key:
             setKey(*key)
-        self.acct_id = self.get_accounts()['data'][0]['id']
+        if get_acc:
+            self.acc_id = self.get_accounts()['data'][0]['id']
+
+    def set_acc_id(self, acc_id):
+        self.acc_id = acc_id
 
     def get_kline(self, symbol, period, size=150):
         """
+        获取K线
         :param symbol
         :param period: 可选值：{1min, 5min, 15min, 30min, 60min, 1day, 1mon, 1week, 1year }
         :param size: 可选值： [1,2000]
@@ -697,9 +727,10 @@ class HBRestAPI_DEC():
             return handle
         return _wrapper
 
-    # 获取marketdepth
+
     def get_latest_depth(self, symbol, type):
         """
+        获取marketdepth
         :param symbol
         :param type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
         :return:
@@ -715,9 +746,10 @@ class HBRestAPI_DEC():
             return handle
         return _wrapper
 
-    # 获取tradedetail
+
     def get_latest_ticker(self, symbol):
         """
+        获取最新的ticker
         :param symbol
         :return:
         """
@@ -731,9 +763,28 @@ class HBRestAPI_DEC():
             return handle
         return _wrapper
 
-    # 获取merge ticker
+    def get_ticker(self, symbol, size=1):
+        """
+        获取历史ticker
+        :param symbol:
+        :param size: 可选[1,2000]
+        :return:
+        """
+        params = {'symbol': symbol,
+                  'size': size}
+
+        url = u.MARKET_URL + '/market/history/trade'
+        def _wrapper(_func):
+            @wraps(_func)
+            def handle():
+                _func(http_get_request(url, params))
+            return handle
+        return _wrapper
+
+
     def get_latest_1m_ohlc(self, symbol):
         """
+        获取最新一分钟的kline
         :param symbol:
         :return:
         """
@@ -764,9 +815,12 @@ class HBRestAPI_DEC():
             return handle
         return _wrapper
 
-    # 获取  支持的交易对
+
     def get_symbols(self, site='Pro'):
         """
+        获取支持的交易对
+        :param site:
+        :return:
         """
         assert site in ['Pro', 'HADAX']
         params = {}
@@ -831,7 +885,7 @@ class HBRestAPI_DEC():
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acct_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
 
@@ -856,7 +910,7 @@ class HBRestAPI_DEC():
         """
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
-        params = {'account-id': self.acct_id,
+        params = {'account-id': self.acc_id,
                   'amount': amount,
                   'symbol': symbol,
                   'type': _type,
@@ -1104,7 +1158,7 @@ class HBRestAPI_DEC():
         :return:
         """
 
-        params = {'account-id': self.acct_id,
+        params = {'account-id': self.acc_id,
                   'amount': amount,
                   'symbol': symbol,
                   'type': _type,

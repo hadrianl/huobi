@@ -5,7 +5,7 @@
 - 没有test和debug，估计含有巨量的**BUG**，慎用！
 
 ## Lastest
-- 消息分发改用zmq来处理，新增针对最新消息推送的优化处理
+- 加入了datatype类，方便数据的请求调用,详看HBData(#1.3.6)
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -46,7 +46,8 @@ from huobitrade.service import HBRestAPI
 from huobitrade import setKey
 
 setKey('your acess_key', 'you secret_key')
-api = HBRestAPI()
+api = HBRestAPI()  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
+# 可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
 ```
 
@@ -104,4 +105,28 @@ class MyLatestHandler(baseHandler):
     @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
     def handle(self, msg):  # 实现handle来处理websocket推送的msg
         print(msg)
+```
+
+### HBData <h3 id="1.3.6"></h2>
+- 使用类似topic的方式来取数据,topic的表达方式与火币有不同
+```python
+from huobitrade import setKey
+from huobitrade.datatype import HBData
+setKey('acess_key', 'secret_key')
+data = HBData()
+
+data.omgeth
+# <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
+data.omgeth.kline
+# <<class 'huobitrade.datatype.HBKline'> for omgeth>
+data.omgeth.depth
+# <<class 'huobitrade.datatype.HBDepth'> for omgeth>
+data.omgeth.ticker
+# <<class 'huobitrade.datatype.HBTicker'> for omgeth>
+data.omgeth.kline._1min  # period前面加'_'
+data.omgeth.kline.latest
+data.omgeth.kline.last_24_hour
+data.omgeth.depth.step0  # step0,1,2,3,4,5
+data.omgeth.ticker.latest
+data.omgeth.ticker.last20  # last1至last2000
 ```
