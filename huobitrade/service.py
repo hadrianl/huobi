@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Time    : 2018/5/24 0024 14:16
-# @Author  : Hadrianl 
+# @Author  : Hadrianl
 # @File    : service.py
 # @Contact   : 137150224@qq.com
 
 import websocket as ws
 import gzip as gz
 import json
-from queue import Queue
 from . import utils as u
 from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx, setUrl, setKey
 from threading import Thread
@@ -19,11 +18,12 @@ import zmq
 import pickle
 import time
 
-
-
 logger.debug(f'<TESTING>LOG_TESTING')
-class HBWebsocket():
-    def __init__(self, addr='wss://api.huobi.br.com/ws', reconn=10, interval=3):
+
+
+class HBWebsocket:
+    def __init__(self, addr='wss://api.huobi.br.com/ws', reconn=10,
+                 interval=3):
         """
         火币websocket封装类
         :param addr: ws地址
@@ -41,11 +41,6 @@ class HBWebsocket():
         self._reconn = reconn
         self._interval = interval
 
-    # def on_data(self, ws, data, data_type, flag):
-    #     print(data)
-    #     print(data_type)
-    #     print(flag)
-
     def send_message(self, msg):  # 发送消息
         msg_json = json.dumps(msg).encode()
         self.ws.send(msg_json)
@@ -59,28 +54,39 @@ class HBWebsocket():
         elif 'status' in msg:
             if msg['status'] == 'ok':
                 if 'subbed' in msg:
-                    self.sub_dict.update({msg['subbed']:{'topic': msg['subbed'], 'id': msg['id']}})
-                    logger.info(f'<订阅>Topic:{msg["subbed"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["id"]}#')
+                    self.sub_dict.update({
+                        msg['subbed']: {
+                            'topic': msg['subbed'],
+                            'id': msg['id']
+                        }
+                    })
+                    logger.info(
+                        f'<订阅>Topic:{msg["subbed"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["id"]}#'
+                    )
                 elif 'unsubbed' in msg:
                     self.sub_dict.pop(msg['unsubbed'])
-                    logger.info(f'<订阅>Topic:{msg["unsubbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"]  / 1000)} #{msg["id"]}#')
+                    logger.info(
+                        f'<订阅>Topic:{msg["unsubbed"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"]  / 1000)} #{msg["id"]}#'
+                    )
                 elif 'rep' in msg:
                     logger.info(f'<请求>Topic:{msg["rep"]}请求数据成功 #{msg["id"]}#')
             elif msg['status'] == 'error':
-                logger.error(f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}')
+                logger.error(
+                    f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
+                )
         else:
-            # logger.info(f'{msg}')
             self.pub_msg(msg)
 
-    def pub_msg(self, msg):  # 核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列
+    def pub_msg(self,
+                msg):  # 核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列
         if 'ch' in msg:
-            self.pub_socket.send_multipart([msg['ch'].encode(), pickle.dumps(msg)])
+            self.pub_socket.send_multipart(
+                [msg['ch'].encode(), pickle.dumps(msg)])
 
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')
             for h in self.__handle_funcs.get(topic, []):
                 h(msg)
-
 
     def on_error(self, ws, error):
         logger.error(f'<错误>on_error:{error}')
@@ -112,7 +118,6 @@ class HBWebsocket():
             handler.stop()
 
     def register_handle_func(self, topic):  # 注册handle_func
-
         def _wrapper(_handle_func):
             if topic not in self.__handle_funcs:
                 self.__handle_funcs[topic] = []
@@ -121,7 +126,8 @@ class HBWebsocket():
 
         return _wrapper
 
-    def unregister_handle_func(self, _handle_func_name, topic):  # 注销handle_func
+    def unregister_handle_func(self, _handle_func_name,
+                               topic):  # 注销handle_func
         handler_list = self.__handle_funcs.get(topic, [])
         for i, h in enumerate(handler_list):
             if h is _handle_func_name:
@@ -142,7 +148,7 @@ class HBWebsocket():
     def _check_info(**kwargs):
         log = []
         if 'period' in kwargs and kwargs['period'] not in u.PERIOD:
-            log.append(f'<验证>不存在Period:{period}')
+            log.append(f'<验证>不存在Period:{kwargs["period"]}')
 
         if 'depth' in kwargs and kwargs['depth'] not in u.DEPTH:
             log.append(f'<验证>不存在Depth:{kwargs["depth"]}')
@@ -174,9 +180,13 @@ class HBWebsocket():
 
     def unsub_depth(self, symbol, depth=0, _id=''):
         if self._check_info(symbol=symbol, depth=depth):
-            msg = {'unsub': f'market.{symbol}.depth.{u.DEPTH[depth]}', 'id': _id}
+            msg = {
+                'unsub': f'market.{symbol}.depth.{u.DEPTH[depth]}',
+                'id': _id
+            }
             self.send_message(msg)
-            logger.info(f'<订阅>depth-发送取消订阅请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
+            logger.info(
+                f'<订阅>depth-发送取消订阅请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
 
     def sub_tick(self, symbol, _id=''):
         if self._check_info(symbol=symbol):
@@ -194,10 +204,12 @@ class HBWebsocket():
         if self._check_info(symbol=symbol, period=period):
             msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
             if 'from' in kwargs:
-                _from = parser.parse(kwargs['from']) if isinstance(kwargs['from'], str) else kwargs['from']
+                _from = parser.parse(kwargs['from']) if isinstance(
+                    kwargs['from'], str) else kwargs['from']
                 msg.update({'from': _from})
             if 'to' in kwargs:
-                _to = parser.parse(kwargs['to']) if isinstance(kwargs['to'], str) else kwargs['to']
+                _to = parser.parse(kwargs['to']) if isinstance(
+                    kwargs['to'], str) else kwargs['to']
                 msg.update({'to': _to})
             self.send_message(msg)
             logger.info(f'<请求>kline-发送请求*{symbol}*@{period} #{_id}#')
@@ -214,19 +226,19 @@ class HBWebsocket():
             self.send_message(msg)
             logger.info(f'<请求>tick-发送请求*{symbol}* #{_id}#')
 
-
     def run(self):
         if not hasattr(self, 'ws_thread') or not self.ws_thread.is_alive():
             self.__start()
 
     def __start(self):
-        self.ws = ws.WebSocketApp(self._addr,
-                                  on_open=self.on_open,
-                                  on_message=self.on_message,
-                                  on_error=self.on_error,
-                                  on_close=self.on_close,
-                                  # on_data=self.on_data
-                                  )
+        self.ws = ws.WebSocketApp(
+            self._addr,
+            on_open=self.on_open,
+            on_message=self.on_message,
+            on_error=self.on_error,
+            on_close=self.on_close,
+            # on_data=self.on_data
+        )
         self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
         self.ws_thread.start()
         self._active = True
@@ -238,7 +250,7 @@ class HBWebsocket():
             self._active = False
 
 
-class HBRestAPI():
+class HBRestAPI:
     def __init__(self, addrs=None, keys=None, get_acc=False):
         """
         火币REST API封装
@@ -263,27 +275,22 @@ class HBRestAPI():
         :param size: 可选值： [1,2000]
         :return:
         """
-        params = {'symbol': symbol,
-                  'period': period,
-                  'size': size}
+        params = {'symbol': symbol, 'period': period, 'size': size}
 
         url = u.MARKET_URL + '/market/history/kline'
         return http_get_request(url, params)
 
-
-    def get_latest_depth(self, symbol, type):
+    def get_latest_depth(self, symbol, _type):
         """
          获取marketdepth
         :param symbol
         :param type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
         :return:
         """
-        params = {'symbol': symbol,
-                  'type': type}
+        params = {'symbol': symbol, 'type': _type}
 
         url = u.MARKET_URL + '/market/depth'
         return http_get_request(url, params)
-
 
     def get_latest_ticker(self, symbol):
         """
@@ -303,12 +310,10 @@ class HBRestAPI():
         :param size: 可选[1,2000]
         :return:
         """
-        params = {'symbol': symbol,
-                  'size': size}
+        params = {'symbol': symbol, 'size': size}
 
         url = u.MARKET_URL + '/market/history/trade'
         return http_get_request(url, params)
-
 
     def get_latest_1m_ohlc(self, symbol):
         """
@@ -321,7 +326,6 @@ class HBRestAPI():
         url = u.MARKET_URL + '/market/detail/merged'
         return http_get_request(url, params)
 
-
     def get_lastest_24H_detail(self, symbol):
         """
         获取最近24小时的概况
@@ -332,7 +336,6 @@ class HBRestAPI():
 
         url = u.MARKET_URL + '/market/detail'
         return http_get_request(url, params)
-
 
     def get_symbols(self, site='Pro'):
         """
@@ -373,10 +376,9 @@ class HBRestAPI():
         params = {}
         return api_key_get(params, path)
 
-
-    # 获取当前账户资产
     def get_balance(self, site='Pro'):
         """
+        获取当前账户资产
         :return:
         """
         assert site in ['Pro', 'HADAX']
@@ -385,11 +387,9 @@ class HBRestAPI():
         params = {}
         return api_key_get(params, path)
 
-    # 下单
-
-    # 创建并执行订单
-    def send_order(self, amount,  symbol, _type, price=0, site='Pro'):
+    def send_order(self, amount, symbol, _type, price=0, site='Pro'):
         """
+        创建并执行订单
         :param amount:
         :param source: 如果使用借贷资产交易，请在下单接口,请求参数source中填写'margin-api'
         :param symbol:
@@ -399,21 +399,22 @@ class HBRestAPI():
         """
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
-        params = {'account-id': self.acc_id,
-                  'amount': amount,
-                  'symbol': symbol,
-                  'type': _type,
-                  'source': 'api'}
+        params = {
+            'account-id': self.acc_id,
+            'amount': amount,
+            'symbol': symbol,
+            'type': _type,
+            'source': 'api'
+        }
         if price:
             params['price'] = price
 
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}order/orders/place'
         return api_key_post(params, path)
 
-    # 撤销订单
     def cancel_order(self, order_id):
         """
-
+        撤销订单
         :param order_id:
         :return:
         """
@@ -421,10 +422,9 @@ class HBRestAPI():
         path = f'/v1/order/orders/{order_id}/submitcancel'
         return api_key_post(params, path)
 
-    # 批量撤销订单
-    def batchcancel_order(self, order_ids:list):
+    def batchcancel_order(self, order_ids: list):
         """
-
+        批量撤销订单
         :param order_id:
         :return:
         """
@@ -433,10 +433,9 @@ class HBRestAPI():
         path = f'/v1/order/orders/batchcancel'
         return api_key_post(params, path)
 
-    # 查询某个订单
     def get_order_info(self, order_id):
         """
-
+        查询某个订单
         :param order_id:
         :return:
         """
@@ -444,10 +443,9 @@ class HBRestAPI():
         path = f'/v1/order/orders/{order_id}'
         return api_key_get(params, path)
 
-    # 查询某个订单的成交明细
     def get_order_matchresults(self, order_id):
         """
-
+        查询某个订单的成交明细
         :param order_id:
         :return:
         """
@@ -455,10 +453,17 @@ class HBRestAPI():
         path = f'/v1/order/orders/{order_id}/matchresults'
         return api_key_get(params, path)
 
-    # 查询当前委托、历史委托
-    def get_orders_info(self, symbol, states, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_orders_info(self,
+                        symbol,
+                        states,
+                        types=None,
+                        start_date=None,
+                        end_date=None,
+                        _from=None,
+                        direct=None,
+                        size=None):
         """
-
+        查询当前委托、历史委托
         :param symbol:
         :param states: 可选值 {pre-submitted 准备提交, submitted 已提交, partial-filled 部分成交, partial-canceled 部分成交撤销, filled 完全成交, canceled 已撤销}
         :param types: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
@@ -469,8 +474,7 @@ class HBRestAPI():
         :param size:
         :return:
         """
-        params = {'symbol': symbol,
-                  'states': states}
+        params = {'symbol': symbol, 'states': states}
 
         if types:
             params[types] = types
@@ -488,10 +492,16 @@ class HBRestAPI():
         path = '/v1/order/orders'
         return api_key_get(params, path)
 
-    # 查询当前成交、历史成交
-    def get_orders_matchresults(self, symbol, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_orders_matchresults(self,
+                                symbol,
+                                types=None,
+                                start_date=None,
+                                end_date=None,
+                                _from=None,
+                                direct=None,
+                                size=None):
         """
-
+        查询当前成交、历史成交
         :param symbol:
         :param types: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
         :param start_date:
@@ -518,31 +528,33 @@ class HBRestAPI():
         path = '/v1/order/matchresults'
         return api_key_get(params, path)
 
-    # 申请提现虚拟币
     def req_withdraw(self, address, amount, currency, fee=0, addr_tag=""):
         """
-        :param address_id:
+        申请提现虚拟币
+        :param address:
         :param amount:
         :param currency:btc, ltc, bcc, eth, etc ...(火币Pro支持的币种)
         :param fee:
-        :param addr-tag:
+        :param addr_tag:
         :return: {
                   "status": "ok",
                   "data": 700
                 }
         """
-        params = {'address': address,
-                  'amount': amount,
-                  'currency': currency,
-                  'fee': fee,
-                  'addr-tag': addr_tag}
+        params = {
+            'address': address,
+            'amount': amount,
+            'currency': currency,
+            'fee': fee,
+            'addr-tag': addr_tag
+        }
         path = '/v1/dw/withdraw/api/create'
 
         return api_key_post(params, path)
 
-    # 申请取消提现虚拟币
     def cancel_withdraw(self, address_id):
         """
+        申请取消提现虚拟币
         :param address_id:
         :return: {
                   "status": "ok",
@@ -564,10 +576,12 @@ class HBRestAPI():
         :return:
         """
         assert _type in ['deposit', 'withdraw']
-        params = {'currency': currency,
-                  'type': _type,
-                  'from': _from,
-                  'size': size}
+        params = {
+            'currency': currency,
+            'type': _type,
+            'from': _from,
+            'size': size
+        }
         path = '/v1/query/deposit-withdraw'
         return api_key_get(params, path)
 
@@ -575,10 +589,9 @@ class HBRestAPI():
     借贷API
     '''
 
-    # 创建并执行借贷订单
-
     def send_margin_order(self, amount, symbol, _type, price=0):
         """
+        创建并执行借贷订单
         :param amount:
         :param symbol:
         :param _type: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
@@ -586,85 +599,84 @@ class HBRestAPI():
         :return:
         """
 
-        params = {'account-id': self.acc_id,
-                  'amount': amount,
-                  'symbol': symbol,
-                  'type': _type,
-                  'source': 'margin-api'}
+        params = {
+            'account-id': self.acc_id,
+            'amount': amount,
+            'symbol': symbol,
+            'type': _type,
+            'source': 'margin-api'
+        }
         if price:
             params['price'] = price
 
         path = '/v1/order/orders/place'
         return api_key_post(params, path)
 
-    # 现货账户划入至借贷账户
-
     def exchange_to_margin(self, symbol, currency, amount):
         """
+        现货账户划入至借贷账户
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-in/margin'
         return api_key_post(params, path)
 
-    # 借贷账户划出至现货账户
-
     def margin_to_exchange(self, symbol, currency, amount):
         """
+        借贷账户划出至现货账户
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-out/margin'
         return api_key_post(params, path)
 
-    # 申请借贷
     def req_margin(self, symbol, currency, amount):
         """
+        申请借贷
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
         path = '/v1/margin/orders'
         return api_key_post(params, path)
 
-    # 归还借贷
     def repay_margin(self, order_id, amount):
         """
+        归还借贷
         :param order_id:
         :param amount:
         :return:
         """
-        params = {'order-id': order_id,
-                  'amount': amount}
+        params = {'order-id': order_id, 'amount': amount}
         path = f'/v1/margin/orders/{order_id}/repay'
         return api_key_post(params, path)
 
-    # 借贷订单
-    def get_loan_orders(self, symbol, currency, start_date="", end_date="", start="", direct="", size=""):
+    def get_loan_orders(self,
+                        symbol,
+                        currency,
+                        start_date="",
+                        end_date="",
+                        start="",
+                        direct="",
+                        size=""):
         """
+        借贷订单
         :param symbol:
         :param currency:
         :param direct: prev 向前，next 向后
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency}
+        params = {'symbol': symbol, 'currency': currency}
         if start_date:
             params['start-date'] = start_date
         if end_date:
@@ -678,9 +690,9 @@ class HBRestAPI():
         path = '/v1/margin/loan-orders'
         return api_key_get(params, path)
 
-    # 借贷账户详情,支持查询单个币种
     def get_margin_balance(self, symbol):
         """
+        借贷账户详情,支持查询单个币种
         :param symbol:
         :return:
         """
@@ -691,12 +703,14 @@ class HBRestAPI():
 
         return api_key_get(params, path)
 
+
 class HBRestAPI_DEC():
     def __init__(self, addr=None, key=None, get_acc=False):
         """
         火币REST API封装decoration版
         :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
         :param keys: 传入(acess_key, secret_key),可用setKey设置
+        :param get_acc: 设置是否初始化获取acc_id,,默认False
         """
         if addr:
             setUrl(*addr)
@@ -716,36 +730,37 @@ class HBRestAPI_DEC():
         :param size: 可选值： [1,2000]
         :return:
         """
-        params = {'symbol': symbol,
-                  'period': period,
-                  'size': size}
+        params = {'symbol': symbol, 'period': period, 'size': size}
         url = u.MARKET_URL + '/market/history/kline'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
+
             return handle
+
         return _wrapper
 
-
-    def get_latest_depth(self, symbol, type):
+    def get_latest_depth(self, symbol, _type):
         """
         获取marketdepth
         :param symbol
         :param type: 可选值：{ percent10, step0, step1, step2, step3, step4, step5 }
         :return:
         """
-        params = {'symbol': symbol,
-                  'type': type}
+        params = {'symbol': symbol, 'type': _type}
 
         url = u.MARKET_URL + '/market/depth'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
-            return handle
-        return _wrapper
 
+            return handle
+
+        return _wrapper
 
     def get_latest_ticker(self, symbol):
         """
@@ -756,11 +771,14 @@ class HBRestAPI_DEC():
         params = {'symbol': symbol}
 
         url = u.MARKET_URL + '/market/trade'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
+
             return handle
+
         return _wrapper
 
     def get_ticker(self, symbol, size=1):
@@ -770,17 +788,18 @@ class HBRestAPI_DEC():
         :param size: 可选[1,2000]
         :return:
         """
-        params = {'symbol': symbol,
-                  'size': size}
+        params = {'symbol': symbol, 'size': size}
 
         url = u.MARKET_URL + '/market/history/trade'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
-            return handle
-        return _wrapper
 
+            return handle
+
+        return _wrapper
 
     def get_latest_1m_ohlc(self, symbol):
         """
@@ -791,16 +810,19 @@ class HBRestAPI_DEC():
         params = {'symbol': symbol}
 
         url = u.MARKET_URL + '/market/detail/merged'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
+
             return handle
+
         return _wrapper
 
-    # 获取 Market Detail 24小时成交量数据
     def get_lastest_24H_detail(self, symbol):
         """
+        获取 Market Detail 24小时成交量数据
         :param symbol
         :return:
         """
@@ -812,9 +834,10 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(http_get_request(url, params))
-            return handle
-        return _wrapper
 
+            return handle
+
+        return _wrapper
 
     def get_symbols(self, site='Pro'):
         """
@@ -830,7 +853,9 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
     def get_currencys(self, site='Pro'):
@@ -846,9 +871,10 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
-            return handle
-        return _wrapper
 
+            return handle
+
+        return _wrapper
 
     def get_timestamp(self):
         params = {}
@@ -858,7 +884,9 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
     '''
@@ -871,17 +899,19 @@ class HBRestAPI_DEC():
         """
         path = '/v1/account/accounts'
         params = {}
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-
-    # 获取当前账户资产
     def get_balance(self, site='Pro'):
         """
+        获取当前账户资产
         :return:
         """
         assert site in ['Pro', 'HADAX']
@@ -893,14 +923,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-    # 下单
-
-    # 创建并执行订单
-    def send_order(self, amount,  symbol, _type, price=0, site='Pro'):
+    def send_order(self, amount, symbol, _type, price=0, site='Pro'):
         """
+        创建并执行订单
         :param amount:
         :param source: 如果使用借贷资产交易，请在下单接口,请求参数source中填写'margin-api'
         :param symbol:
@@ -910,11 +940,13 @@ class HBRestAPI_DEC():
         """
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
-        params = {'account-id': self.acc_id,
-                  'amount': amount,
-                  'symbol': symbol,
-                  'type': _type,
-                  'source': 'api'}
+        params = {
+            'account-id': self.acc_id,
+            'amount': amount,
+            'symbol': symbol,
+            'type': _type,
+            'source': 'api'
+        }
         if price:
             params['price'] = price
 
@@ -924,13 +956,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-    # 撤销订单
     def cancel_order(self, order_id):
         """
-
+        撤销订单
         :param order_id:
         :return:
         """
@@ -941,14 +974,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-
-    # 批量撤销订单
-    def batchcancel_order(self, order_ids:list):
+    def batchcancel_order(self, order_ids: list):
         """
-
+        批量撤销订单
         :param order_id:
         :return:
         """
@@ -960,13 +993,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-    # 查询某个订单
     def get_order_info(self, order_id):
         """
-
+        查询某个订单
         :param order_id:
         :return:
         """
@@ -977,13 +1011,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-    # 查询某个订单的成交明细
     def get_order_matchresults(self, order_id):
         """
-
+        查询某个订单的成交明细
         :param order_id:
         :return:
         """
@@ -994,16 +1029,25 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-    # 查询当前委托、历史委托
-    def get_orders_info(self, symbol, states, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_orders_info(self,
+                        symbol,
+                        states,
+                        types=None,
+                        start_date=None,
+                        end_date=None,
+                        _from=None,
+                        direct=None,
+                        size=None):
         """
-
+        查询当前委托、历史委托
         :param symbol:
         :param states: 可选值 {pre-submitted 准备提交, submitted 已提交, partial-filled 部分成交, partial-canceled 部分成交撤销, filled 完全成交, canceled 已撤销}
-        :param types: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
+        :param types: 可选值 买卖类型
         :param start_date:
         :param end_date:
         :param _from:
@@ -1011,8 +1055,7 @@ class HBRestAPI_DEC():
         :param size:
         :return:
         """
-        params = {'symbol': symbol,
-                  'states': states}
+        params = {'symbol': symbol, 'states': states}
 
         if types:
             params[types] = types
@@ -1033,13 +1076,21 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-    # 查询当前成交、历史成交
-    def get_orders_matchresults(self, symbol, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_orders_matchresults(self,
+                                symbol,
+                                types=None,
+                                start_date=None,
+                                end_date=None,
+                                _from=None,
+                                direct=None,
+                                size=None):
         """
-
+        查询当前成交、历史成交
         :param symbol:
         :param types: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
         :param start_date:
@@ -1069,13 +1120,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-
-    # 申请提现虚拟币
     def req_withdraw(self, address, amount, currency, fee=0, addr_tag=""):
         """
+        申请提现虚拟币
         :param address_id:
         :param amount:
         :param currency:btc, ltc, bcc, eth, etc ...(火币Pro支持的币种)
@@ -1086,24 +1138,27 @@ class HBRestAPI_DEC():
                   "data": 700
                 }
         """
-        params = {'address': address,
-                  'amount': amount,
-                  'currency': currency,
-                  'fee': fee,
-                  'addr-tag': addr_tag}
+        params = {
+            'address': address,
+            'amount': amount,
+            'currency': currency,
+            'fee': fee,
+            'addr-tag': addr_tag
+        }
         path = '/v1/dw/withdraw/api/create'
 
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-
-    # 申请取消提现虚拟币
     def cancel_withdraw(self, address_id):
         """
+        申请取消提现虚拟币
         :param address_id:
         :return: {
                   "status": "ok",
@@ -1117,7 +1172,9 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
     def get_deposit_withdraw_record(self, currency, _type, _from, size):
@@ -1130,27 +1187,30 @@ class HBRestAPI_DEC():
         :return:
         """
         assert _type in ['deposit', 'withdraw']
-        params = {'currency': currency,
-                  'type': _type,
-                  'from': _from,
-                  'size': size}
+        params = {
+            'currency': currency,
+            'type': _type,
+            'from': _from,
+            'size': size
+        }
         path = '/v1/query/deposit-withdraw'
 
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
     '''
     借贷API
     '''
 
-    # 创建并执行借贷订单
-
     def send_margin_order(self, amount, symbol, _type, price=0):
         """
+        创建并执行借贷订单
         :param amount:
         :param symbol:
         :param _type: 可选值 {buy-market：市价买, sell-market：市价卖, buy-limit：限价买, sell-limit：限价卖}
@@ -1158,11 +1218,13 @@ class HBRestAPI_DEC():
         :return:
         """
 
-        params = {'account-id': self.acc_id,
-                  'amount': amount,
-                  'symbol': symbol,
-                  'type': _type,
-                  'source': 'margin-api'}
+        params = {
+            'account-id': self.acc_id,
+            'amount': amount,
+            'symbol': symbol,
+            'type': _type,
+            'source': 'margin-api'
+        }
         if price:
             params['price'] = price
 
@@ -1172,97 +1234,111 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
-            return handle
-        return _wrapper
 
-    # 现货账户划入至借贷账户
+            return handle
+
+        return _wrapper
 
     def exchange_to_margin(self, symbol, currency, amount):
         """
+        现货账户划入至借贷账户
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
         path = '/v1/dw/transfer-in/margin'
 
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
-            return handle
-        return _wrapper
 
-    # 借贷账户划出至现货账户
+            return handle
+
+        return _wrapper
 
     def margin_to_exchange(self, symbol, currency, amount):
         """
+        借贷账户划出至现货账户
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-out/margin'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-    # 申请借贷
     def req_margin(self, symbol, currency, amount):
         """
+        申请借贷
         :param amount:
         :param currency:
         :param symbol:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency,
-                  'amount': amount}
+        params = {'symbol': symbol, 'currency': currency, 'amount': amount}
         path = '/v1/margin/orders'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-    # 归还借贷
     def repay_margin(self, order_id, amount):
         """
+        归还借贷
         :param order_id:
         :param amount:
         :return:
         """
-        params = {'order-id': order_id,
-                  'amount': amount}
+        params = {'order-id': order_id, 'amount': amount}
         path = f'/v1/margin/orders/{order_id}/repay'
+
         def _wrapper(_func):
             @wraps(_func)
             def handle():
                 _func(api_key_post(params, path))
+
             return handle
+
         return _wrapper
 
-    # 借贷订单
-    def get_loan_orders(self, symbol, currency, start_date="", end_date="", start="", direct="", size=""):
+    def get_loan_orders(self,
+                        symbol,
+                        currency,
+                        start_date="",
+                        end_date="",
+                        start="",
+                        direct="",
+                        size=""):
         """
+        借贷订单
         :param symbol:
         :param currency:
-        :param direct: prev 向前，next 向后
+        :param start_date:
+        :param end_date:
+        :param start:
+        :param direct:
+        :param size:
         :return:
         """
-        params = {'symbol': symbol,
-                  'currency': currency}
+        params = {'symbol': symbol, 'currency': currency}
         if start_date:
             params['start-date'] = start_date
         if end_date:
@@ -1279,12 +1355,14 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
 
-    # 借贷账户详情,支持查询单个币种
     def get_margin_balance(self, symbol):
         """
+        借贷账户详情,支持查询单个币种
         :param symbol:
         :return:
         """
@@ -1297,24 +1375,7 @@ class HBRestAPI_DEC():
             @wraps(_func)
             def handle():
                 _func(api_key_get(params, path))
+
             return handle
+
         return _wrapper
-
-
-if __name__ == '__main__':
-    import time
-    hb = HBWebsocket()
-    hb.run()
-    time.sleep(1)
-    hb.sub_kline('ethbtc', '1min')
-    from huobitrade.handler import DBHandler
-    handler = DBHandler()
-    hb.register_handler(handler, 'market.ethbtc.kline.1min')
-    @hb.register_handle_func('market.ethbtc.kline.1min')
-    def handle(msg):
-        print('handle:', msg)
-
-    api = HBRestAPI()
-    print(api.get_timestamp())
-
-

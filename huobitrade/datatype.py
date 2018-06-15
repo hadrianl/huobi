@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Time    : 2018/6/13 0013 16:36
-# @Author  : Hadrianl 
+# @Author  : Hadrianl
 # @File    : datatype.py
 # @Contact   : 137150224@qq.com
 
@@ -10,16 +10,17 @@ from .service import HBRestAPI
 from .utils import PERIOD, DEPTH
 from itertools import chain
 
-
+__all__ = ['HBData']
 _api = HBRestAPI(get_acc=False)
 
-class HBKline():
+
+class HBKline:
     def __init__(self, symbol):
         self.__symbol = symbol
 
     def __getattr__(self, item):
         global _api
-        if item in ('_'+ p for p in PERIOD):
+        if item in ('_' + p for p in PERIOD):
             reply = _api.get_kline(self.__symbol, item.strip('_'))
             klines = pd.DataFrame(reply['data'])
             return klines
@@ -29,8 +30,8 @@ class HBKline():
             return latest_kline
         elif item == 'last_24_hour':
             reply = _api.get_lastest_24H_detail(self.__symbol)
-            last_24H = pd.Series(reply['tick'])
-            return last_24H
+            last_24h = pd.Series(reply['tick'])
+            return last_24h
         else:
             raise AttributeError
 
@@ -38,12 +39,12 @@ class HBKline():
         return f'<{self.__class__} for {self.__symbol}>'
 
 
-class HBDepth():
+class HBDepth:
     def __init__(self, symbol):
         self.__symbol = symbol
 
     def __getattr__(self, item):
-        global __api
+        global _api
         if item in (d for d in DEPTH.values()):
             reply = _api.get_latest_depth(self.__symbol, item)
             bids, asks = reply['tick']['bids'], reply['tick']['asks']
@@ -57,7 +58,8 @@ class HBDepth():
     def __repr__(self):
         return f'<{self.__class__} for {self.__symbol}>'
 
-class HBTicker():
+
+class HBTicker:
     def __init__(self, symbol):
         self.__symbol = symbol
 
@@ -70,7 +72,9 @@ class HBTicker():
         elif 'last' in item:
             size = int(item.strip('last'))
             reply = _api.get_ticker(self.__symbol, size)
-            ticker_list = [t for t in chain(*[i['data'] for i in reply['data']])]
+            ticker_list = [
+                t for t in chain(*[i['data'] for i in reply['data']])
+            ]
             tickers = pd.DataFrame(ticker_list)
             return tickers
 
@@ -78,7 +82,7 @@ class HBTicker():
         return f'<{self.__class__} for {self.__symbol}>'
 
 
-class HBSymbol():
+class HBSymbol:
     def __init__(self, name, **kwargs):
         self.name = name
         self.attr = kwargs
@@ -96,17 +100,17 @@ class HBSymbol():
         return f'<Symbol:{self.name}-{self.attr}>'
 
 
-
-class HBData():
+class HBData:
     """
     火币的集成数据类，快速获取数据
     """
+
     def __init__(self, site='Pro'):
         self.site = site
         self.symbols = []
         self.__update_symbols()
 
-    def addSymbol(self, symbol):
+    def add_symbol(self, symbol):
         setattr(self, symbol.name, symbol)
 
     def __update_symbols(self):
@@ -114,8 +118,5 @@ class HBData():
         _symbols = _api.get_symbols(self.site)
         for d in _symbols['data']:  # 获取交易对信息
             name = d['base-currency'] + d['quote-currency']
-            self.addSymbol(HBSymbol(name, **d))
+            self.add_symbol(HBSymbol(name, **d))
             self.symbols.append(name)
-
-
-

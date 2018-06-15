@@ -1,22 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # @Time    : 2018/5/25 0025 14:52
-# @Author  : Hadrianl 
+# @Author  : Hadrianl
 # @File    : handler.py
 # @Contact   : 137150224@qq.com
 
 import pymongo as pmo
 from .utils import logger, handler_profiler, zmq_ctx
 from threading import Thread
-from queue import Queue,Empty
 from abc import abstractmethod
 import zmq
 import pickle
 
-class baseHandler():
-    def __init__(self, name, topic: (str, list)=None, *args, **kwargs):
+
+class BaseHandler:
+    def __init__(self, name, topic: (str, list) = None, *args, **kwargs):
         self.name = name
-        self.topic = set(topic if isinstance(topic, list) else [topic]) if topic !=None else set()
+        self.topic = set(topic if isinstance(topic, list) else
+                         [topic]) if topic is not None else set()
         self.ctx = zmq_ctx
         self.sub_socket = self.ctx.socket(zmq.SUB)
         self.sub_socket.setsockopt(zmq.RCVTIMEO, 3000)
@@ -38,7 +39,7 @@ class baseHandler():
             try:
                 # msg = self.queue.get(timeout=5)
                 topic, msg = self.sub_socket.recv_multipart()
-                if msg == None:  # 向队列传入None来作为结束信号
+                if msg is None:  # 向队列传入None来作为结束信号
                     break
                 msg = pickle.loads(msg)
                 self.handle(msg)
@@ -71,13 +72,13 @@ class baseHandler():
         ...
 
 
-class DBHandler(baseHandler, pmo.MongoClient):
+class DBHandler(BaseHandler, pmo.MongoClient):
     def __init__(self, topic=None, host='localhost', port=27017, db='HuoBi'):
-        baseHandler.__init__(self, 'DB', topic)
+        BaseHandler.__init__(self, 'DB', topic)
         pmo.MongoClient.__init__(self, host, port)
         self.db = self.get_database(db)
 
-    def into_db(self, data, topic:str):
+    def into_db(self, data, topic: str):
         collection = self.db.get_collection(topic)
         try:
             if 'kline' in topic:
@@ -98,5 +99,3 @@ class DBHandler(baseHandler, pmo.MongoClient):
             topic = msg.get('ch') or msg.get('rep')
             data = msg.get('tick') or msg.get('data')
             self.into_db(data, topic)
-
-

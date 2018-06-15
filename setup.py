@@ -13,7 +13,8 @@ with open("README.md", "r", encoding='utf-8') as rm:
 requires = ['websocket-client',
             'requests',
             'pymongo',
-            'pyzmq']
+            'pyzmq',
+            'pandas']
 
 setup(name='huobitrade',
       version='0.2.0',
