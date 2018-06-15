@@ -6,6 +6,7 @@
 
 ## Lastest
 - 加入了datatype类，方便数据的请求调用,详看HBData(#1.3.6)
+- 增加wechat_handler
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -130,3 +131,7 @@ data.omgeth.depth.step0  # step0,1,2,3,4,5
 data.omgeth.ticker.latest
 data.omgeth.ticker.last20  # last1至last2000
 ```
+
+### Extra
+- 交易策略运营相关的模块
+详见[extra](https://github.com/hadrianl/huobi/blob/master/huobitrade/extra/log_handler.md)
