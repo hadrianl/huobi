@@ -108,15 +108,16 @@ class HBData:
     def __init__(self, site='Pro'):
         self.site = site
         self.symbols = []
-        self.__update_symbols()
+        self._update_symbols()
 
     def add_symbol(self, symbol):
         setattr(self, symbol.name, symbol)
 
-    def __update_symbols(self):
+    def _update_symbols(self):
         global _api
         _symbols = _api.get_symbols(self.site)
-        for d in _symbols['data']:  # 获取交易对信息
-            name = d['base-currency'] + d['quote-currency']
-            self.add_symbol(HBSymbol(name, **d))
-            self.symbols.append(name)
+        if _symbols is not None:
+            for d in _symbols['data']:  # 获取交易对信息
+                name = d['base-currency'] + d['quote-currency']
+                self.add_symbol(HBSymbol(name, **d))
+                self.symbols.append(name)
