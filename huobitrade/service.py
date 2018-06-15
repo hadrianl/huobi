@@ -52,6 +52,7 @@ class HBWebsocket:
             pong = {'pong': msg['ping']}
             self.send_message(pong)
         elif 'status' in msg:
+            logger.debug(f'{msg}')
             if msg['status'] == 'ok':
                 if 'subbed' in msg:
                     self.sub_dict.update({
@@ -75,6 +76,7 @@ class HBWebsocket:
                     f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
                 )
         else:
+            logger.debug(f'{msg}')
             self.pub_msg(msg)
 
     def pub_msg(self,
@@ -159,6 +161,16 @@ class HBWebsocket:
             return False
         else:
             return True
+
+    def sub_overview(self, _id=''):
+        msg = {'sub': 'market.overview', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<订阅>overview-发送订阅请求 #{_id}#')
+
+    def unsub_overview(self, _id=''):
+        msg = {'unsub': 'market.overview', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<订阅>overview-发送取消订阅请求 #{_id}#')
 
     def sub_kline(self, symbol, period, _id=''):
         if self._check_info(symbol=symbol, period=period):
