@@ -17,7 +17,7 @@ requires = ['websocket-client',
             'pandas']
 
 setup(name='huobitrade',
-      version='0.2.1',
+      version='0.2.2',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",
