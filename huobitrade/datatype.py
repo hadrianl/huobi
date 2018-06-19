@@ -20,10 +20,14 @@ class HBKline:
 
     def __getattr__(self, item):
         global _api
-        if item in ('_' + p for p in PERIOD):
-            reply = _api.get_kline(self.__symbol, item.strip('_'))
-            klines = pd.DataFrame(reply['data'])
-            return klines
+        if item[0] == '_':
+            args = item[1:].split('_')
+            if args[0] not in PERIOD:
+                raise Exception('period not exist.')
+            else:
+                reply = _api.get_kline(self.__symbol, args[0], int(args[1]))
+                klines = pd.DataFrame(reply['data'])
+                return klines
         elif item == 'latest':
             reply = _api.get_latest_1m_ohlc(self.__symbol)
             latest_kline = pd.Series(reply['tick'])
@@ -76,7 +80,8 @@ class HBTicker:
             latest_ticker = pd.DataFrame(reply['tick']['data'])
             return latest_ticker
         elif 'last' in item:
-            size = int(item.strip('last'))
+            args = item.split('_')
+            size = int(args[1])
             reply = _api.get_ticker(self.__symbol, size)
             ticker_list = [
                 t for t in chain(*[i['data'] for i in reply['data']])

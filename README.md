@@ -124,12 +124,12 @@ data.omgeth.depth
 # <<class 'huobitrade.datatype.HBDepth'> for omgeth>
 data.omgeth.ticker
 # <<class 'huobitrade.datatype.HBTicker'> for omgeth>
-data.omgeth.kline._1min  # period前面加'_'
+data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为1000
 data.omgeth.kline.latest
 data.omgeth.kline.last_24_hour
 data.omgeth.depth.step0  # step0,1,2,3,4,5
-data.omgeth.ticker.latest
-data.omgeth.ticker.last20  # last1至last2000
+data.omgeth.ticker.latest  # 最新的一条tick
+data.omgeth.ticker.last_20  # last_1至last_2000
 ```
 
 ### Extra
