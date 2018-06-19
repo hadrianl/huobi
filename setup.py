@@ -16,15 +16,17 @@ requires = ['websocket-client',
             'pyzmq',
             'pandas']
 
+hb_packages = ['huobitrade', 'huobitrade/extra']
+
 setup(name='huobitrade',
-      version='0.2.3',
+      version='0.2.4',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",
       author='Hadrianl',
       autor_email='137150224@qq.com',
       url='https://github.com/hadrianl/huobi',
-      packages=find_packages(),
+      packages=hb_packages,
       classifiers=("Programming Language :: Python :: 3.6",
                    "License :: OSI Approved :: MIT License"),
       install_requires=requires)
