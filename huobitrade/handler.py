@@ -44,8 +44,8 @@ class BaseHandler:
                 topic, msg = self.sub_socket.recv_multipart()
                 if msg is None:  # 向队列传入None来作为结束信号
                     break
+                msg = pickle.loads(msg)
                 if not self.lastest:  # 对所有msg做处理
-                    msg = pickle.loads(msg)
                     self.handle(msg)
                 elif not self.lastest_handle_thread.is_alive():  # 只对lastest的msg做处理
                     self.lastest_handle_thread = Thread(target=self.handle, args=(msg, ), name=f'{self.name}-lastest_handle')
