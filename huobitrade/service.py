@@ -215,14 +215,14 @@ class HBWebsocket:
     def rep_kline(self, symbol, period, _id='', **kwargs):
         if self._check_info(symbol=symbol, period=period):
             msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
-            if 'from' in kwargs:
-                _from = parser.parse(kwargs['from']) if isinstance(
-                    kwargs['from'], str) else kwargs['from']
-                msg.update({'from': _from})
-            if 'to' in kwargs:
-                _to = parser.parse(kwargs['to']) if isinstance(
-                    kwargs['to'], str) else kwargs['to']
-                msg.update({'to': _to})
+            if '_from' in kwargs:
+                _from = parser.parse(kwargs['_from']).timestamp() if isinstance(
+                    kwargs['_from'], str) else kwargs['_from']
+                msg.update({'from': int(_from)})
+            if '_to' in kwargs:
+                _to = parser.parse(kwargs['_to']).timestamp() if isinstance(
+                    kwargs['_to'], str) else kwargs['_to']
+                msg.update({'to': int(_to)})
             self.send_message(msg)
             logger.info(f'<请求>kline-发送请求*{symbol}*@{period} #{_id}#')
 
