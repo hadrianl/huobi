@@ -79,8 +79,8 @@ class HBWebsocket:
             logger.debug(f'{msg}')
             self.pub_msg(msg)
 
-    def pub_msg(self,
-                msg):  # 核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列
+    def pub_msg(self, msg):
+        """核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列"""
         if 'ch' in msg:
             self.pub_socket.send_multipart(
                 [msg['ch'].encode(), pickle.dumps(msg)])
@@ -128,8 +128,8 @@ class HBWebsocket:
 
         return _wrapper
 
-    def unregister_handle_func(self, _handle_func_name,
-                               topic):  # 注销handle_func
+    def unregister_handle_func(self, _handle_func_name, topic):
+        """ 注销handle_func """
         handler_list = self.__handle_funcs.get(topic, [])
         for i, h in enumerate(handler_list):
             if h is _handle_func_name:
@@ -274,7 +274,10 @@ class HBRestAPI:
         if keys:
             setKey(*keys)
         if get_acc:
-            self.acc_id = self.get_accounts()['data'][0]['id']
+            try:
+                self.acc_id = self.get_accounts()['data'][0]['id']
+            except Exception as e:
+                raise Exception(f'Failed to get account: key may not be set ->{e}')
 
     def set_acc_id(self, acc_id):
         self.acc_id = acc_id

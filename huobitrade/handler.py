@@ -22,14 +22,17 @@ class BaseHandler:
         self.sub_socket = self.ctx.socket(zmq.SUB)
         self.sub_socket.setsockopt(zmq.RCVTIMEO, 3000)
 
-        if self.topic:
+        if self.topic:  # 如果topic默认为None，则对所有的topic做处理
             for t in self.topic:
                 self.sub_socket.subscribe(t)
         else:
             self.sub_socket.subscribe('')
 
         if kwargs.get('latest', False):  # 可以通过lastest(bool)来订阅最新的数据
-            self.sub_socket.set_hwm(1)
+            self.lastest_handle_thread = Thread(name=f'{self.name}-lastest_handle')
+            self.lastest = True
+        else:
+            self.lastest = False
         self.thread = Thread(name=self.name)
         self.__active = False
 
@@ -37,12 +40,17 @@ class BaseHandler:
         self.sub_socket.connect('inproc://HBWS')
         while self.__active:
             try:
-                # msg = self.queue.get(timeout=5)
+
                 topic, msg = self.sub_socket.recv_multipart()
                 if msg is None:  # 向队列传入None来作为结束信号
                     break
-                msg = pickle.loads(msg)
-                self.handle(msg)
+                if not self.lastest:  # 对所有msg做处理
+                    msg = pickle.loads(msg)
+                    self.handle(msg)
+                elif not self.lastest_handle_thread.is_alive():  # 只对lastest的msg做处理
+                    self.lastest_handle_thread = Thread(target=self.handle, args=(msg, ), name=f'{self.name}-lastest_handle')
+                    self.lastest_handle_thread.setDaemon(True)
+                    self.lastest_handle_thread.start()
             except zmq.error.Again:
                 ...
             except Exception as e:

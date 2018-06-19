@@ -11,7 +11,7 @@ from .utils import PERIOD, DEPTH
 from itertools import chain
 
 __all__ = ['HBData']
-_api = HBRestAPI(get_acc=False)
+_api = HBRestAPI()
 
 
 class HBKline:
@@ -38,6 +38,9 @@ class HBKline:
     def __repr__(self):
         return f'<{self.__class__} for {self.__symbol}>'
 
+    def __str__(self):
+        return f'<{self.__class__} for {self.__symbol}>'
+
 
 class HBDepth:
     def __init__(self, symbol):
@@ -56,6 +59,9 @@ class HBDepth:
             raise AttributeError
 
     def __repr__(self):
+        return f'<{self.__class__} for {self.__symbol}>'
+
+    def __str__(self):
         return f'<{self.__class__} for {self.__symbol}>'
 
 
@@ -81,6 +87,8 @@ class HBTicker:
     def __repr__(self):
         return f'<{self.__class__} for {self.__symbol}>'
 
+    def __str__(self):
+        return f'<{self.__class__} for {self.__symbol}>'
 
 class HBSymbol:
     def __init__(self, name, **kwargs):
@@ -116,8 +124,17 @@ class HBData:
     def _update_symbols(self):
         global _api
         _symbols = _api.get_symbols(self.site)
-        if _symbols is not None:
+        if _symbols['status'] == 'ok':
             for d in _symbols['data']:  # 获取交易对信息
                 name = d['base-currency'] + d['quote-currency']
                 self.add_symbol(HBSymbol(name, **d))
                 self.symbols.append(name)
+        else:
+            raise Exception(f'err-code:{_symbols["err-code"]}  err-msg:{_symbols["err-msg"]}')
+
+    def __repr__(self):
+        return f'<HBData>:{self.symbols}'
+
+    def __str__(self):
+        return f'<HBData>:{self.symbols}'
+
