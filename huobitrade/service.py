@@ -17,6 +17,7 @@ from functools import wraps
 import zmq
 import pickle
 import time
+import grequests
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -282,7 +283,23 @@ class HBRestAPI:
     def set_acc_id(self, acc_id):
         self.acc_id = acc_id
 
-    def get_kline(self, symbol, period, size=150):
+    def __async_request_exception_handler(self, req, e):
+        logger.error(f'async_request:{req}--exception:{e}')
+
+    def async_request(self, reqs:list, exc_handler=None, timeout=None)->list:
+        """
+        异步并发所有请求
+        :param reqs: _async为True的请求list
+        :param exc_handler: 异常处理函数，参数为request和exception，默认None输出到logger.error
+        :param timeout:
+        :return:
+        """
+        exc_handler = exc_handler if exc_handler else self.__async_request_exception_handler
+        responses = grequests.map(reqs, exception_handler=exc_handler, gtimeout=timeout)
+        result = [response if response.status_code == 200 else None for response in responses]
+        return result
+
+    def get_kline(self, symbol, period, size=150, _async=False):
         """
         获取KLine
         :param symbol
@@ -293,9 +310,9 @@ class HBRestAPI:
         params = {'symbol': symbol, 'period': period, 'size': size}
 
         url = u.MARKET_URL + '/market/history/kline'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_latest_depth(self, symbol, _type):
+    def get_latest_depth(self, symbol, _type, _async=False):
         """
          获取marketdepth
         :param symbol
@@ -305,9 +322,9 @@ class HBRestAPI:
         params = {'symbol': symbol, 'type': _type}
 
         url = u.MARKET_URL + '/market/depth'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_latest_ticker(self, symbol):
+    def get_latest_ticker(self, symbol, _async=False):
         """
         获取tradedetail
         :param symbol
@@ -316,9 +333,9 @@ class HBRestAPI:
         params = {'symbol': symbol}
 
         url = u.MARKET_URL + '/market/trade'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_ticker(self, symbol, size=1):
+    def get_ticker(self, symbol, size=1, _async=False):
         """
         获取历史ticker
         :param symbol:
@@ -328,9 +345,9 @@ class HBRestAPI:
         params = {'symbol': symbol, 'size': size}
 
         url = u.MARKET_URL + '/market/history/trade'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_latest_1m_ohlc(self, symbol):
+    def get_latest_1m_ohlc(self, symbol, _async=False):
         """
         获取最新一分钟的k线
         :param symbol:
@@ -339,9 +356,9 @@ class HBRestAPI:
         params = {'symbol': symbol}
 
         url = u.MARKET_URL + '/market/detail/merged'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_lastest_24H_detail(self, symbol):
+    def get_lastest_24H_detail(self, symbol, _async=False):
         """
         获取最近24小时的概况
         :param symbol
@@ -350,9 +367,9 @@ class HBRestAPI:
         params = {'symbol': symbol}
 
         url = u.MARKET_URL + '/market/detail'
-        return http_get_request(url, params)
+        return http_get_request(url, params, _async=_async)
 
-    def get_symbols(self, site='Pro'):
+    def get_symbols(self, site='Pro', _async=False):
         """
         获取  支持的交易对
         :param site:
@@ -361,9 +378,9 @@ class HBRestAPI:
         assert site in ['Pro', 'HADAX']
         params = {}
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/symbols'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def get_currencys(self, site='Pro'):
+    def get_currencys(self, site='Pro', _async=False):
         """
         获取所有币种
         :param site:
@@ -372,26 +389,26 @@ class HBRestAPI:
         assert site in ['Pro', 'HADAX']
         params = {}
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}common/currencys'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def get_timestamp(self):
+    def get_timestamp(self, _async=False):
         params = {}
         path = '/v1/common/timestamp'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
     '''
     Trade/Account API
     '''
 
-    def get_accounts(self):
+    def get_accounts(self, _async=False):
         """
         :return:
         """
         path = '/v1/account/accounts'
         params = {}
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def get_balance(self, site='Pro'):
+    def get_balance(self, site='Pro', _async=False):
         """
         获取当前账户资产
         :return:
@@ -400,9 +417,9 @@ class HBRestAPI:
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def send_order(self, amount, symbol, _type, price=0, site='Pro'):
+    def send_order(self, amount, symbol, _type, price=0, site='Pro', _async=False):
         """
         创建并执行订单
         :param amount:
@@ -425,9 +442,9 @@ class HBRestAPI:
             params['price'] = price
 
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}order/orders/place'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def cancel_order(self, order_id):
+    def cancel_order(self, order_id, _async=False):
         """
         撤销订单
         :param order_id:
@@ -435,9 +452,9 @@ class HBRestAPI:
         """
         params = {}
         path = f'/v1/order/orders/{order_id}/submitcancel'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def batchcancel_order(self, order_ids: list):
+    def batchcancel_order(self, order_ids: list, _async=False):
         """
         批量撤销订单
         :param order_id:
@@ -446,9 +463,9 @@ class HBRestAPI:
         assert isinstance(order_ids, list)
         params = {'order-ids': order_ids}
         path = f'/v1/order/orders/batchcancel'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def get_order_info(self, order_id):
+    def get_order_info(self, order_id, _async=False):
         """
         查询某个订单
         :param order_id:
@@ -456,9 +473,9 @@ class HBRestAPI:
         """
         params = {}
         path = f'/v1/order/orders/{order_id}'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def get_order_matchresults(self, order_id):
+    def get_order_matchresults(self, order_id, _async=False):
         """
         查询某个订单的成交明细
         :param order_id:
@@ -466,7 +483,7 @@ class HBRestAPI:
         """
         params = {}
         path = f'/v1/order/orders/{order_id}/matchresults'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
     def get_orders_info(self,
                         symbol,
@@ -476,7 +493,8 @@ class HBRestAPI:
                         end_date=None,
                         _from=None,
                         direct=None,
-                        size=None):
+                        size=None,
+                        _async=False):
         """
         查询当前委托、历史委托
         :param symbol:
@@ -505,7 +523,7 @@ class HBRestAPI:
         if size:
             params['size'] = size
         path = '/v1/order/orders'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
     def get_orders_matchresults(self,
                                 symbol,
@@ -514,7 +532,8 @@ class HBRestAPI:
                                 end_date=None,
                                 _from=None,
                                 direct=None,
-                                size=None):
+                                size=None,
+                                _async=False):
         """
         查询当前成交、历史成交
         :param symbol:
@@ -541,9 +560,9 @@ class HBRestAPI:
         if size:
             params['size'] = size
         path = '/v1/order/matchresults'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def req_withdraw(self, address, amount, currency, fee=0, addr_tag=""):
+    def req_withdraw(self, address, amount, currency, fee=0, addr_tag="", _async=False):
         """
         申请提现虚拟币
         :param address:
@@ -565,9 +584,9 @@ class HBRestAPI:
         }
         path = '/v1/dw/withdraw/api/create'
 
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def cancel_withdraw(self, address_id):
+    def cancel_withdraw(self, address_id, _async=False):
         """
         申请取消提现虚拟币
         :param address_id:
@@ -579,9 +598,9 @@ class HBRestAPI:
         params = {}
         path = f'/v1/dw/withdraw-virtual/{address_id}/cancel'
 
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def get_deposit_withdraw_record(self, currency, _type, _from, size):
+    def get_deposit_withdraw_record(self, currency, _type, _from, size, _async=False):
         """
 
         :param currency:
@@ -598,13 +617,13 @@ class HBRestAPI:
             'size': size
         }
         path = '/v1/query/deposit-withdraw'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
     '''
     借贷API
     '''
 
-    def send_margin_order(self, amount, symbol, _type, price=0):
+    def send_margin_order(self, amount, symbol, _type, price=0, _async=False):
         """
         创建并执行借贷订单
         :param amount:
@@ -625,9 +644,9 @@ class HBRestAPI:
             params['price'] = price
 
         path = '/v1/order/orders/place'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def exchange_to_margin(self, symbol, currency, amount):
+    def exchange_to_margin(self, symbol, currency, amount, _async=False):
         """
         现货账户划入至借贷账户
         :param amount:
@@ -638,9 +657,9 @@ class HBRestAPI:
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-in/margin'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def margin_to_exchange(self, symbol, currency, amount):
+    def margin_to_exchange(self, symbol, currency, amount, _async=False):
         """
         借贷账户划出至现货账户
         :param amount:
@@ -651,9 +670,9 @@ class HBRestAPI:
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-out/margin'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def req_margin(self, symbol, currency, amount):
+    def req_margin(self, symbol, currency, amount, _async=False):
         """
         申请借贷
         :param amount:
@@ -663,9 +682,9 @@ class HBRestAPI:
         """
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
         path = '/v1/margin/orders'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
-    def repay_margin(self, order_id, amount):
+    def repay_margin(self, order_id, amount, _async=False):
         """
         归还借贷
         :param order_id:
@@ -674,7 +693,7 @@ class HBRestAPI:
         """
         params = {'order-id': order_id, 'amount': amount}
         path = f'/v1/margin/orders/{order_id}/repay'
-        return api_key_post(params, path)
+        return api_key_post(params, path, _async=_async)
 
     def get_loan_orders(self,
                         symbol,
@@ -683,7 +702,8 @@ class HBRestAPI:
                         end_date="",
                         start="",
                         direct="",
-                        size=""):
+                        size="",
+                        _async=False):
         """
         借贷订单
         :param symbol:
@@ -703,9 +723,9 @@ class HBRestAPI:
         if size:
             params['size'] = size
         path = '/v1/margin/loan-orders'
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
-    def get_margin_balance(self, symbol):
+    def get_margin_balance(self, symbol, _async=False):
         """
         借贷账户详情,支持查询单个币种
         :param symbol:
@@ -716,7 +736,7 @@ class HBRestAPI:
         if symbol:
             params['symbol'] = symbol
 
-        return api_key_get(params, path)
+        return api_key_get(params, path, _async=_async)
 
 
 class HBRestAPI_DEC():

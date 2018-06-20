@@ -5,6 +5,7 @@
 # @File    : utils.py
 # @Contact   : 137150224@qq.com
 
+import grequests
 import logging
 import sys
 import base64
@@ -107,7 +108,7 @@ def createSign(pParams, method, host_url, request_path, secret_key):
     return signature
 
 
-def http_get_request(url, params, add_to_headers=None):
+def http_get_request(url, params, add_to_headers=None, _async=False):
     """
     from 火币demo, get方法
     :param url:
@@ -124,19 +125,22 @@ def http_get_request(url, params, add_to_headers=None):
     if add_to_headers:
         headers.update(add_to_headers)
     postdata = urllib.parse.urlencode(params)
-    response = requests.get(url, postdata, headers=headers, timeout=5)
-    try:
-
-        if response.status_code == 200:
-            return response.json()
-        else:
+    if _async:
+        response = grequests.get(url, params=postdata, headers=headers, timeout=5)
+        return response
+    else:
+        response = requests.get(url, postdata, headers=headers, timeout=5)
+        try:
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return
+        except BaseException as e:
+            logger.exception(f'<GET>httpGet failed, detail is:{response.text},{e}')
             return
-    except BaseException as e:
-        logger.exception(f'<GET>httpGet failed, detail is:{response.text},{e}')
-        return
 
 
-def http_post_request(url, params, add_to_headers=None):
+def http_post_request(url, params, add_to_headers=None, _async=False):
     """
     from 火币demo, post方法
     :param url:
@@ -151,20 +155,24 @@ def http_post_request(url, params, add_to_headers=None):
     if add_to_headers:
         headers.update(add_to_headers)
     postdata = json.dumps(params)
-    response = requests.post(url, postdata, headers=headers, timeout=10)
-    try:
+    if _async:
+        response = grequests.post(url, postdata, headers=headers, timeout=10)
+        return response
+    else:
+        response = requests.post(url, postdata, headers=headers, timeout=10)
+        try:
 
-        if response.status_code == 200:
-            return response.json()
-        else:
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return
+        except BaseException as e:
+            logger.exception(
+                f'<POST>httpPost failed, detail is:{response.text},{e}')
             return
-    except BaseException as e:
-        logger.exception(
-            f'<POST>httpPost failed, detail is:{response.text},{e}')
-        return
 
 
-def api_key_get(params, request_path):
+def api_key_get(params, request_path, _async=False):
     """
     from 火币demo, 构造get请求并调用get方法
     :param params:
@@ -187,10 +195,10 @@ def api_key_get(params, request_path):
                                      SECRET_KEY)
 
     url = host_url + request_path
-    return http_get_request(url, params)
+    return http_get_request(url, params, _async=_async)
 
 
-def api_key_post(params, request_path):
+def api_key_post(params, request_path, _async=False):
     """
     from 火币demo, 构造post请求并调用post方法
     :param params:
@@ -212,7 +220,7 @@ def api_key_post(params, request_path):
     params_to_sign['Signature'] = createSign(params_to_sign, method, host_name,
                                              request_path, SECRET_KEY)
     url = host_url + request_path + '?' + urllib.parse.urlencode(params_to_sign)
-    return http_post_request(url, params)
+    return http_post_request(url, params, _async=_async)
 
 
 def handler_profiler(handle):

@@ -14,12 +14,13 @@ requires = ['websocket-client',
             'requests',
             'pymongo',
             'pyzmq',
-            'pandas']
+            'pandas',
+            'grequests']
 
 hb_packages = ['huobitrade', 'huobitrade/extra']
 
 setup(name='huobitrade',
-      version='0.2.5',
+      version='0.2.6',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",

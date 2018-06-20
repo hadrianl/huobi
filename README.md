@@ -5,8 +5,7 @@
 - 没有test和debug，估计含有巨量的**BUG**，慎用！
 
 ## Lastest
-- 加入了datatype类，方便数据的请求调用,详看HBData(#1.3.6)
-- 增加wechat_handler
+- 加入了restapi的异步并发请求
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -50,6 +49,14 @@ setKey('your acess_key', 'you secret_key')
 api = HBRestAPI()  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
 # 可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
+
+# 异步请求
+api = HBRestAPI(get_acc=True)
+klines = api.get_kline('omgeth', _async=True)
+symbols = api.get_symbols(_async=True)
+results = api.async_request([klines, symbols])
+for r in results:
+    print(r)
 ```
 
 ### Restful API-Decoration    （Experimental）
