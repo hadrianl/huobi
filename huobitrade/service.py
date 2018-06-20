@@ -213,6 +213,16 @@ class HBWebsocket:
             self.send_message(msg)
             logger.info(f'<订阅>tick-发送取消订阅请求*{symbol}* #{_id}#')
 
+    def sub_all_ticks(self, _id=''):
+        msg = {'sub': f'market.tickers', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<订阅>all_ticks-发送订阅请求 #{_id}#')
+
+    def unsub_all_ticks(self, _id=''):
+        msg = {'unsub': f'market.tickers', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<订阅>all_ticks-发送取消订阅请求 #{_id}#')
+
     def rep_kline(self, symbol, period, _id='', **kwargs):
         if self._check_info(symbol=symbol, period=period):
             msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
@@ -345,6 +355,16 @@ class HBRestAPI:
         params = {'symbol': symbol, 'size': size}
 
         url = u.MARKET_URL + '/market/history/trade'
+        return http_get_request(url, params, _async=_async)
+
+    def get_all_tickers(self, _async=False):
+        """
+        获取所有ticker
+        :param _async:
+        :return:
+        """
+        params = {}
+        url = u.MARKET_URL + '/market/tickers'
         return http_get_request(url, params, _async=_async)
 
     def get_latest_1m_ohlc(self, symbol, _async=False):
@@ -752,7 +772,10 @@ class HBRestAPI_DEC():
         if key:
             setKey(*key)
         if get_acc:
-            self.acc_id = self.get_accounts()['data'][0]['id']
+            @self.get_accounts()
+            def set_acc(msg):
+                self.acc_id = msg['data'][0]['id']
+            set_acc()
 
     def set_acc_id(self, acc_id):
         self.acc_id = acc_id
@@ -835,6 +858,25 @@ class HBRestAPI_DEC():
             return handle
 
         return _wrapper
+
+    def get_all_tickers(self):
+        """
+        获取所有ticker
+        :param _async:
+        :return:
+        """
+        params = {}
+        url = u.MARKET_URL + '/market/tickers'
+
+        def _wrapper(_func):
+            @wraps(_func)
+            def handle():
+                _func(http_get_request(url, params))
+
+            return handle
+
+        return _wrapper
+
 
     def get_latest_1m_ohlc(self, symbol):
         """

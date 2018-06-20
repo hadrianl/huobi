@@ -143,3 +143,8 @@ class HBData:
     def __str__(self):
         return f'<HBData>:{self.symbols}'
 
+    def __getattr__(self, item):
+        global _api
+        if item == 'all_tickers':
+            return _api.get_all_tickers()
+
