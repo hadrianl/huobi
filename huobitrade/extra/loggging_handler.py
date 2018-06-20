@@ -16,7 +16,7 @@ except ImportError:
 TRADE_INFO = 60
 
 class WeChatHandler(Handler):
-    def __init__(self, chatroom, level=TRADE_INFO, enableCmdQR=True):
+    def __init__(self, chatroom=None, level=TRADE_INFO, enableCmdQR=True):
         super(WeChatHandler, self).__init__(level)
         self._CmdQR = enableCmdQR
         self._chatroom = chatroom
@@ -37,7 +37,7 @@ class WeChatHandler(Handler):
             self.log_receiver = self.client.search_chatrooms(name=self._chatroom)[0]['UserName']
         except Exception as e:
             print(e)
-            self.log_receiver = ''
+            self.log_receiver = None
         self.send_log('开始接收HUOBI信息')
 
     def _exitCallback(self):
