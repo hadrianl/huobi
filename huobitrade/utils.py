@@ -33,7 +33,9 @@ handlers = [
 
 logging.basicConfig(
     format=_format, datefmt=_datefmt, level=_level, handlers=handlers)
+logging.addLevelName(60, 'WeChatLog')
 logger = logging.getLogger('HuoBi')
+
 SYMBOL = {'ethbtc', 'ltcbtc', 'etcbtc', 'bchbtc'}
 PERIOD = {
     '1min', '5min', '15min', '30min', '60min', '1day', '1mon', '1week', '1year'
