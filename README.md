@@ -51,7 +51,7 @@ hb.unregister_handle_func(handle, 'market.ethbtc.kline.1min')  # 释放处理函
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
 
-setKey('your acess_key', 'you secret_key')
+setKey('your acess_key', 'you secret_key')  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥
 api = HBRestAPI()  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
 # 可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
@@ -128,6 +128,7 @@ from huobitrade import setKey
 from huobitrade.datatype import HBData
 setKey('acess_key', 'secret_key')
 data = HBData()
+account = HBAccount()
 
 data.omgeth
 # <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
@@ -144,6 +145,13 @@ data.omgeth.depth.step0  # step0,1,2,3,4,5
 data.omgeth.ticker.latest  # 最新的一条tick
 data.omgeth.ticker.last_20  # last_1至last_2000
 data.all_24h_ohlc  # 当前所有交易对的ticker
+account.Detail  # 所有账户明细
+account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余
+account.Pro_XXXXX_balance.update()  # 更新账户结余信息
+account.Pro_XXXXX_order  # 某账户的订单
+account.Pro_XXXXX_order['order_id']  # 查询某order明细
+account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
+
 ```
 
 ### Extra

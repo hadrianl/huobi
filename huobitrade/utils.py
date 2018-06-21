@@ -138,6 +138,8 @@ def http_get_request(url, params, add_to_headers=None, _async=False):
             if response.status_code == 200:
                 return response.json()
             else:
+                logger.debug(
+                    f'<GET>error_code:{response.status_code}  reason:{response.reason} detail:{response.text}')
                 return
         except BaseException as e:
             logger.exception(f'<GET>httpGet failed, detail is:{response.text},{e}')
@@ -169,6 +171,7 @@ def http_post_request(url, params, add_to_headers=None, _async=False):
             if response.status_code == 200:
                 return response.json()
             else:
+                logger.debug(f'<POST>error_code:{response.status_code}  reason:{response.reason} detail:{response.text}')
                 return
         except BaseException as e:
             logger.exception(

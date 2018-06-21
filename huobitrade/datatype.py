@@ -7,11 +7,11 @@
 
 import pandas as pd
 from .service import HBRestAPI
-from .utils import PERIOD, DEPTH
+from .utils import PERIOD, DEPTH, logger
 from itertools import chain
 
 __all__ = ['HBData']
-_api = HBRestAPI()
+_api = HBRestAPI(get_acc=True)
 
 
 class HBKline:
@@ -147,4 +147,114 @@ class HBData:
         global _api
         if item == 'all_24h_ohlc':
             return _api.get_all_lastest_24h_ohlc()
+
+
+class HBOrder:
+    def __init__(self, acc_id, site):
+        self.acc_id = acc_id
+        self.site = site
+
+    def send(self, amount, symbol, _type, price=0):
+        ret = _api.send_order(self.acc_id, amount, symbol, _type, price, site=self.site)
+        logger.debug(f'send_order_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'send order request failed!--{ret}')
+
+    def cancel(self, order_id):
+        ret = _api.cancel_order(order_id)
+        logger.debug(f'cancel_order_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'cancel order request failed!--{ret}')
+
+    def batchcancel(self, order_ids:list):
+        ret = _api.batchcancel_order(order_ids)
+        logger.debug(f'batchcancel_order_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'batchcancel order request failed!--{ret}')
+
+    def __getitem__(self, item):
+        oi_ret = _api.get_order_info(item, _async=True)
+        mr_ret = _api.get_order_matchresults(item, _async=True)
+        ret = _api.async_request([oi_ret, mr_ret])
+        logger.debug(f'get_order_ret:{ret}')
+        d = dict()
+        if all(ret):
+            if ret[0]['status'] == 'ok':
+                d.update({'order_info': ret[0]['data']})
+            else:
+                d.update({'order_info':{}})
+
+            if ret[1]['status'] == 'ok':
+                d.update({'match_result': ret[1]['data']})
+            else:
+                d.update({'match_result': {}})
+            return d
+        else:
+            raise Exception(f'get order request failed--{ret}')
+
+
+class HBAccount:
+    def __init__(self):
+        ret = _api.get_accounts()
+        logger.debug(f'get_order_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            self.Detail = pd.DataFrame(data).set_index('id')
+        else:
+            raise Exception(f'get accounts request failed--{ret}')
+
+    def __getattr__(self, item):
+        try:
+            args = item.split('_')
+            if int(args[1]) in self.Detail.index.tolist():
+                if args[2] == 'balance':
+                    bal = HBBalance(args[1], args[0])
+                    setattr(self, item, bal)
+                    return bal
+                elif args[2] == 'order':
+                    order = HBOrder(args[1], args[0])
+                    setattr(self, item, order)
+                    return order
+                else:
+                    raise AttributeError
+            else:
+                raise AttributeError
+        except Exception as e:
+            raise e
+
+
+
+
+class HBBalance:
+    def __init__(self, account_id, site):
+        self.acc_id = account_id
+        self.site = site
+        self.update()
+
+    def update(self):
+        ret = _api.get_balance(self.acc_id, self.site)
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            self.Id = data['id']
+            self.Type = data['type']
+            self.State = data['state']
+            self.Detail = pd.DataFrame(data['list']).set_index('currency')
+        else:
+            raise Exception(f'get balance request failed--{ret}')
+
+    def __repr__(self):
+        return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'
+
+    def __str__(self):
+        return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'
+
+
+# class HBMargin:
+#     def __init__(self, account_id):
 

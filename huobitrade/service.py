@@ -424,18 +424,18 @@ class HBRestAPI:
         params = {}
         return api_key_get(params, path, _async=_async)
 
-    def get_balance(self, site='Pro', _async=False):
+    def get_balance(self, acc_id, site='Pro', _async=False):
         """
         获取当前账户资产
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acc_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
         return api_key_get(params, path, _async=_async)
 
-    def send_order(self, amount, symbol, _type, price=0, site='Pro', _async=False):
+    def send_order(self, acc_id, amount, symbol, _type, price=0, site='Pro', _async=False):
         """
         创建并执行订单
         :param amount:
@@ -448,7 +448,7 @@ class HBRestAPI:
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
         params = {
-            'account-id': self.acc_id,
+            'account-id': acc_id,
             'amount': amount,
             'symbol': symbol,
             'type': _type,
@@ -639,7 +639,7 @@ class HBRestAPI:
     借贷API
     '''
 
-    def send_margin_order(self, amount, symbol, _type, price=0, _async=False):
+    def send_margin_order(self, acc_id, amount, symbol, _type, price=0, _async=False):
         """
         创建并执行借贷订单
         :param amount:
@@ -650,7 +650,7 @@ class HBRestAPI:
         """
 
         params = {
-            'account-id': self.acc_id,
+            'account-id': acc_id,
             'amount': amount,
             'symbol': symbol,
             'type': _type,
@@ -982,13 +982,13 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def get_balance(self, site='Pro'):
+    def get_balance(self, acc_id, site='Pro'):
         """
         获取当前账户资产
         :return:
         """
         assert site in ['Pro', 'HADAX']
-        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{self.acc_id}/balance'
+        path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
 
@@ -1001,7 +1001,7 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def send_order(self, amount, symbol, _type, price=0, site='Pro'):
+    def send_order(self, acc_id, amount, symbol, _type, price=0, site='Pro'):
         """
         创建并执行订单
         :param amount:
@@ -1014,7 +1014,7 @@ class HBRestAPI_DEC():
         assert site in ['Pro', 'HADAX']
         assert _type in u.ORDER_TYPE
         params = {
-            'account-id': self.acc_id,
+            'account-id': acc_id,
             'amount': amount,
             'symbol': symbol,
             'type': _type,
@@ -1281,7 +1281,7 @@ class HBRestAPI_DEC():
     借贷API
     '''
 
-    def send_margin_order(self, amount, symbol, _type, price=0):
+    def send_margin_order(self, acc_id, amount, symbol, _type, price=0):
         """
         创建并执行借贷订单
         :param amount:
@@ -1292,7 +1292,7 @@ class HBRestAPI_DEC():
         """
 
         params = {
-            'account-id': self.acc_id,
+            'account-id': acc_id,
             'amount': amount,
             'symbol': symbol,
             'type': _type,
