@@ -5,7 +5,8 @@
 # @File    : utils.py
 # @Contact   : 137150224@qq.com
 
-import grequests
+
+from requests_futures.sessions import FuturesSession
 import logging
 import sys
 import base64
@@ -65,6 +66,7 @@ ACCESS_KEY = ""
 SECRET_KEY = ""
 
 zmq_ctx = zmq.Context()
+async_session = FuturesSession(max_workers=8)
 
 # API 请求地址
 MARKET_URL = 'https://api.huobi.br.com'
@@ -126,7 +128,7 @@ def http_get_request(url, params, add_to_headers=None, _async=False):
         headers.update(add_to_headers)
     postdata = urllib.parse.urlencode(params)
     if _async:
-        response = grequests.get(url, params=postdata, headers=headers, timeout=5)
+        response = async_session.get(url, params=postdata, headers=headers, timeout=5)
         return response
     else:
         response = requests.get(url, postdata, headers=headers, timeout=5)
@@ -156,7 +158,7 @@ def http_post_request(url, params, add_to_headers=None, _async=False):
         headers.update(add_to_headers)
     postdata = json.dumps(params)
     if _async:
-        response = grequests.post(url, postdata, headers=headers, timeout=10)
+        response = async_session.post(url, postdata, headers=headers, timeout=10)
         return response
     else:
         response = requests.post(url, postdata, headers=headers, timeout=10)

@@ -15,12 +15,12 @@ requires = ['websocket-client',
             'pymongo',
             'pyzmq',
             'pandas',
-            'grequests']
+            'requests-futures']
 
 hb_packages = ['huobitrade', 'huobitrade/extra']
 
 setup(name='huobitrade',
-      version='0.2.7',
+      version='0.2.8',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",

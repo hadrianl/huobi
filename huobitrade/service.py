@@ -17,7 +17,6 @@ from functools import wraps
 import zmq
 import pickle
 import time
-import grequests
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -296,18 +295,15 @@ class HBRestAPI:
     def __async_request_exception_handler(self, req, e):
         logger.error(f'async_request:{req}--exception:{e}')
 
-    def async_request(self, reqs:list, exc_handler=None, timeout=None)->list:
+    def async_request(self, reqs:list)->list:
         """
-        异步并发所有请求
-        :param reqs: _async为True的请求list
-        :param exc_handler: 异常处理函数，参数为request和exception，默认None输出到logger.error
-        :param timeout:
+        异步并发请求
+        :param reqs: 请求列表
         :return:
         """
-        exc_handler = exc_handler if exc_handler else self.__async_request_exception_handler
-        responses = grequests.map(reqs, exception_handler=exc_handler, gtimeout=timeout)
-        result = [response if response.status_code == 200 else None for response in responses]
-        return result
+        result = (response.result() for response in reqs)
+        ret = [r.json() if r.status_code == 200 else None for r in result]
+        return ret
 
     def get_kline(self, symbol, period, size=150, _async=False):
         """
