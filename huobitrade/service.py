@@ -212,12 +212,12 @@ class HBWebsocket:
             self.send_message(msg)
             logger.info(f'<订阅>tick-发送取消订阅请求*{symbol}* #{_id}#')
 
-    def sub_all_ticks(self, _id=''):
+    def sub_all_lastest_24h_ohlc(self, _id=''):
         msg = {'sub': f'market.tickers', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送订阅请求 #{_id}#')
 
-    def unsub_all_ticks(self, _id=''):
+    def unsub_all_lastest_24h_ohlc(self, _id=''):
         msg = {'unsub': f'market.tickers', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送取消订阅请求 #{_id}#')
@@ -353,9 +353,9 @@ class HBRestAPI:
         url = u.MARKET_URL + '/market/history/trade'
         return http_get_request(url, params, _async=_async)
 
-    def get_all_tickers(self, _async=False):
+    def get_all_lastest_24h_ohlc(self, _async=False):
         """
-        获取所有ticker
+        获取所有24小时的概况
         :param _async:
         :return:
         """
@@ -374,7 +374,7 @@ class HBRestAPI:
         url = u.MARKET_URL + '/market/detail/merged'
         return http_get_request(url, params, _async=_async)
 
-    def get_lastest_24H_detail(self, symbol, _async=False):
+    def get_lastest_24h_ohlc(self, symbol, _async=False):
         """
         获取最近24小时的概况
         :param symbol
@@ -855,7 +855,7 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def get_all_tickers(self):
+    def get_all_lastest_24h_ohlc(self):
         """
         获取所有ticker
         :param _async:
@@ -893,7 +893,7 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def get_lastest_24H_detail(self, symbol):
+    def get_lastest_24h_ohlc(self, symbol):
         """
         获取 Market Detail 24小时成交量数据
         :param symbol

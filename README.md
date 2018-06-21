@@ -2,7 +2,13 @@
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过pub_msg来分发到个各topic下的Handler线程来处理
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
-- 没有test和debug，估计含有巨量的**BUG**，慎用！
+- 目前处于开发阶段，估计含有巨量的**BUG**，慎用！
+
+## Notice
+- 该封装的函数命名跟火币本身的请求命名表达不太一致
+- 包含open, close, high, low的数据命名是kline或ohlc（其中部分有ask和bid，都纳入这类命名）
+- 当且仅当数据只有一条逐笔tick（没有ohlc），命名是ticker
+- 深度数据则命名为depth
 
 ## Lastest
 - 加入了restapi的异步并发请求
@@ -137,6 +143,7 @@ data.omgeth.kline.last_24_hour
 data.omgeth.depth.step0  # step0,1,2,3,4,5
 data.omgeth.ticker.latest  # 最新的一条tick
 data.omgeth.ticker.last_20  # last_1至last_2000
+data.all_24h_ohlc  # 当前所有交易对的ticker
 ```
 
 ### Extra

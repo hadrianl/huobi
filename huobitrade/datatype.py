@@ -145,6 +145,6 @@ class HBData:
 
     def __getattr__(self, item):
         global _api
-        if item == 'all_tickers':
-            return _api.get_all_tickers()
+        if item == 'all_24h_ohlc':
+            return _api.get_all_lastest_24h_ohlc()
 
