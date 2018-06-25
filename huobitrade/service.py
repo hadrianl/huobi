@@ -503,8 +503,8 @@ class HBRestAPI:
 
     def get_orders_info(self,
                         symbol,
-                        states,
-                        types=None,
+                        states:list,
+                        types:list=None,
                         start_date=None,
                         end_date=None,
                         _from=None,
@@ -523,14 +523,17 @@ class HBRestAPI:
         :param size:
         :return:
         """
+        states = ','.join(states)
         params = {'symbol': symbol, 'states': states}
 
         if types:
-            params[types] = types
+            params[types] = ','.join(types)
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
+            ed = parser.parse(end_date).date()
+            params['end-date'] = str(ed)
         if _from:
             params['from'] = _from
         if direct:
@@ -543,7 +546,7 @@ class HBRestAPI:
 
     def get_orders_matchresults(self,
                                 symbol,
-                                types=None,
+                                types:list=None,
                                 start_date=None,
                                 end_date=None,
                                 _from=None,
@@ -564,11 +567,13 @@ class HBRestAPI:
         params = {'symbol': symbol}
 
         if types:
-            params[types] = types
+            params[types] = ','.join(types)
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
+            ed = parser.parse(end_date).date()
+            params['end-date'] = str(ed)
         if _from:
             params['from'] = _from
         if direct:
@@ -688,7 +693,7 @@ class HBRestAPI:
         path = '/v1/dw/transfer-out/margin'
         return api_key_post(params, path, _async=_async)
 
-    def req_margin(self, symbol, currency, amount, _async=False):
+    def apply_loan(self, symbol, currency, amount, _async=False):
         """
         申请借贷
         :param amount:
@@ -700,7 +705,7 @@ class HBRestAPI:
         path = '/v1/margin/orders'
         return api_key_post(params, path, _async=_async)
 
-    def repay_margin(self, order_id, amount, _async=False):
+    def repay_loan(self, order_id, amount, _async=False):
         """
         归还借贷
         :param order_id:
@@ -714,26 +719,25 @@ class HBRestAPI:
     def get_loan_orders(self,
                         symbol,
                         currency,
-                        start_date="",
-                        end_date="",
-                        start="",
-                        direct="",
-                        size="",
+                        states=None,
+                        start_date=None,
+                        end_date=None,
+                        _from=None,
+                        direct=None,
+                        size=None,
                         _async=False):
-        """
-        借贷订单
-        :param symbol:
-        :param currency:
-        :param direct: prev 向前，next 向后
-        :return:
-        """
+
         params = {'symbol': symbol, 'currency': currency}
+        if states:
+            params['states'] = states
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
-        if start:
-            params['from'] = start
+            ed = parser.parse(end_date).date()
+            params['end_date'] = str(ed)
+        if _from:
+            params['from'] = _from
         if direct and direct in ['prev', 'next']:
             params['direct'] = direct
         if size:
@@ -1133,9 +1137,11 @@ class HBRestAPI_DEC():
         if types:
             params[types] = types
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
+            ed = parser.parse(end_date).date()
+            params['end_date'] = str(ed)
         if _from:
             params['from'] = _from
         if direct:
@@ -1178,9 +1184,11 @@ class HBRestAPI_DEC():
         if types:
             params[types] = types
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
+            ed = parser.parse(end_date).date()
+            params['end_date'] = str(ed)
         if _from:
             params['from'] = _from
         if direct:
@@ -1353,7 +1361,7 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def req_margin(self, symbol, currency, amount):
+    def apply_loan(self, symbol, currency, amount):
         """
         申请借贷
         :param amount:
@@ -1373,7 +1381,7 @@ class HBRestAPI_DEC():
 
         return _wrapper
 
-    def repay_margin(self, order_id, amount):
+    def repay_loan(self, order_id, amount):
         """
         归还借贷
         :param order_id:
@@ -1395,29 +1403,34 @@ class HBRestAPI_DEC():
     def get_loan_orders(self,
                         symbol,
                         currency,
-                        start_date="",
-                        end_date="",
-                        start="",
-                        direct="",
-                        size=""):
+                        states=None,
+                        start_date=None,
+                        end_date=None,
+                        _from=None,
+                        direct=None,
+                        size=None):
         """
         借贷订单
         :param symbol:
         :param currency:
         :param start_date:
         :param end_date:
-        :param start:
+        :param _from:
         :param direct:
         :param size:
         :return:
         """
         params = {'symbol': symbol, 'currency': currency}
+        if states:
+            params['states'] = states
         if start_date:
-            params['start-date'] = start_date
+            sd = parser.parse(start_date).date()
+            params['start-date'] = str(sd)
         if end_date:
-            params['end-date'] = end_date
-        if start:
-            params['from'] = start
+            ed = parser.parse(end_date).date()
+            params['end_date'] = str(ed)
+        if _from:
+            params['from'] = _from
         if direct and direct in ['prev', 'next']:
             params['direct'] = direct
         if size:
