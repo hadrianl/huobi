@@ -127,8 +127,9 @@ class MyLatestHandler(BaseHandler):
 from huobitrade import setKey
 from huobitrade.datatype import HBData
 setKey('acess_key', 'secret_key')
-data = HBData()
+data = HBMarket()
 account = HBAccount()
+margin = HBMargin()
 
 data.omgeth
 # <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
@@ -148,10 +149,11 @@ data.all_24h_ohlc  # 当前所有交易对的ticker
 account.Detail  # 所有账户明细
 account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余
 account.Pro_XXXXX_balance.update()  # 更新账户结余信息
-account.Pro_XXXXX_order  # 某账户的订单
-account.Pro_XXXXX_order['order_id']  # 查询某order明细
+account.Pro_XXXXX_order  # 某账户的订单类
+account.Pro_XXXXX_order['order_id']  # 查询某order明细,或者用get方法
 account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
-
+account.Pro_XXXXX_trade.get('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
+margin.transferIn('ethusdt', 'eth', 1)
 ```
 
 ### Extra
