@@ -7,7 +7,7 @@
 
 import pymongo as pmo
 from .utils import logger, handler_profiler, zmq_ctx
-from threading import Thread
+from threading import Thread, Timer
 from abc import abstractmethod
 import zmq
 import pickle
@@ -77,6 +77,34 @@ class BaseHandler:
 
     @abstractmethod
     def handle(self, msg):  # 所有handler需要重写这个函数
+        ...
+
+
+class TimeHandler:
+    def __init__(self, name, interval, get_msg=None):
+        self.name = name
+        self.interval = interval
+        self.get_msg = get_msg
+
+    def run(self):
+        try:
+            msg = self.get_msg() if self.get_msg else None
+            self.handle(msg)
+        except Exception as e:
+            logger.exception(f'<TimeHandler>-{self.name} exception:{e}')
+
+    def stop(self):
+        self.timer.cancel()
+        self.timer.join()
+
+    def start(self):
+        self.timer = Timer(self.interval, self.run)
+        self.timer.setName(self.name)
+        self.timer.setDaemon(True)
+        self.timer.start()
+
+    @abstractmethod
+    def handle(self, msg):
         ...
 
 
