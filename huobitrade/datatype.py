@@ -10,7 +10,7 @@ from .service import HBRestAPI
 from .utils import PERIOD, DEPTH, logger
 from itertools import chain
 
-__all__ = ['HBData']
+__all__ = ['HBMarket', 'HBAccount', 'HBMargin']
 _api = HBRestAPI(get_acc=True)
 
 
@@ -113,9 +113,9 @@ class HBSymbol:
         return f'<Symbol:{self.name}-{self.attr}>'
 
 
-class HBData:
+class HBMarket:
     """
-    火币的集成数据类，快速获取数据
+    火币的市场数据类，快捷获取数据
     """
 
     def __init__(self, site='Pro'):
@@ -178,9 +178,9 @@ class HBOrder:
         else:
             raise Exception(f'batchcancel order request failed!--{ret}')
 
-    def __getitem__(self, item):
-        oi_ret = _api.get_order_info(item, _async=True)
-        mr_ret = _api.get_order_matchresults(item, _async=True)
+    def get(self, order_id):
+        oi_ret = _api.get_order_info(order_id, _async=True)
+        mr_ret = _api.get_order_matchresults(order_id, _async=True)
         ret = _api.async_request([oi_ret, mr_ret])
         logger.debug(f'get_order_ret:{ret}')
         d = dict()
@@ -196,7 +196,49 @@ class HBOrder:
                 d.update({'match_result': {}})
             return d
         else:
-            raise Exception(f'get order request failed--{ret}')
+            raise Exception(f'get order request failed!--{ret}')
+
+    def get_range(self, symbol, states, types, start_date=None, end_date=None, _from=None, direct=None, size=None):
+        ret = _api.get_orders_info(symbol, states, types, start_date, end_date, _from, direct, size)
+        logger.debug(f'get_orders_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            df = pd.DataFrame(data).set_index('id')
+            return df
+        else:
+            raise Exception(f'get orders request failed!--{ret}')
+
+    def __getitem__(self, item):
+        return self.get(item)
+
+
+class HBTrade:
+    def __init__(self, acc_id, site):
+        self.acc_id = acc_id
+        self.site = site
+
+    def get(self, order_id):
+        ret = _api.get_order_matchresults(order_id)
+        logger.debug(f'trade_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            df = pd.DataFrame(data).set_index('id')
+            return df
+        else:
+            raise Exception(f'trade results request failed!--{ret}')
+
+    def get_range(self, symbol, types, start_date=None, end_date=None, _from=None, direct=None, size=None):
+        ret = _api.get_orders_matchresults(symbol, types, start_date, end_date, _from, direct, size)
+        logger.debug(f'trade_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            df = pd.DataFrame(data).set_index('id')
+            return df
+        else:
+            raise Exception(f'trade results request failed!--{ret}')
+
+    def __getitem__(self, item):
+        return self.get(item)
 
 
 class HBAccount:
@@ -207,7 +249,7 @@ class HBAccount:
             data = ret['data']
             self.Detail = pd.DataFrame(data).set_index('id')
         else:
-            raise Exception(f'get accounts request failed--{ret}')
+            raise Exception(f'get accounts request failed!--{ret}')
 
     def __getattr__(self, item):
         try:
@@ -221,6 +263,10 @@ class HBAccount:
                     order = HBOrder(args[1], args[0])
                     setattr(self, item, order)
                     return order
+                elif args[2] == 'trade':
+                    trade = HBTrade(args[1], args[0])
+                    setattr(self, item, trade)
+                    return trade
                 else:
                     raise AttributeError
             else:
@@ -228,7 +274,11 @@ class HBAccount:
         except Exception as e:
             raise e
 
+    def __repr__(self):
+        return f'<HBAccount>Detail:\n{self.Detail}'
 
+    def __str__(self):
+        return f'<HBAccount>Detail:\n{self.Detail}'
 
 
 class HBBalance:
@@ -254,7 +304,82 @@ class HBBalance:
     def __str__(self):
         return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'
 
+    def __getitem__(self, item):
+        return self.Detail.loc[item]
 
-# class HBMargin:
-#     def __init__(self, account_id):
 
+class HBMargin:
+    def __init__(self):
+        ...
+
+    def transferIn(self, symbol, currency, amount):
+        ret = _api.exchange_to_margin(symbol, currency, amount)
+        logger.debug(f'transferIn_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'transferIn request failed!--{ret}')
+
+    def transferOut(self, symbol, currency, amount):
+        ret = _api.exchange_to_margin(symbol, currency, amount)
+        logger.debug(f'transferOut_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'transferOut request failed!--{ret}')
+
+    def applyLoan(self, symbol, currency, amount):
+        ret = _api.apply_loan(symbol, currency, amount)
+        logger.debug(f'apply_loan_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'apply_loan request failed!--{ret}')
+
+    def repayLoan(self, symbol, currency, amount):
+        ret = _api.repay_loan(symbol, currency, amount)
+        logger.debug(f'repay_loan_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            return ret['data']
+        else:
+            raise Exception(f'repay_loan request failed!--{ret}')
+
+    def getLoan(self, symbol, currency, states=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+        ret = _api.get_loan_orders(symbol, currency, states, start_date, end_date, _from, direct, size)
+        logger.debug(f'get_loan_ret:{ret}')
+        if ret and ret['status'] == 'ok':
+            df = pd.DataFrame(ret['data']).set_index('id')
+            return df
+        else:
+            raise Exception(f'get_loan request failed!--{ret}')
+
+    def getBalance(self, symbol):
+        return HBMarginBalance(symbol)
+
+    def __getitem__(self, item):
+        return self.getBalance(item)
+
+class HBMarginBalance:
+    def __init__(self, symbol):
+        ret = _api.get_margin_balance(symbol)
+        if ret and ret['status'] == 'ok':
+            data = ret['data']
+            self.Id = data['id']
+            self.Type = data['type']
+            self.State = data['state']
+            self.Symbol = data['symbol']
+            self.Fl_price = data['fl-price']
+            self.Fl_type = data['fl-type']
+            self.Risk_rate = data['safe']
+            self.Detail = pd.DataFrame(data['list']).set_index('currency')
+        else:
+            raise Exception(f'get balance request failed--{ret}')
+
+    def __repr__(self):
+        return f'<HBMarginBalance: {self.symbol}>ID:{self.Id} Type:{self.Type} State:{self.State} Risk-rate:{self.Risk_rate}'
+
+    def __str__(self):
+        return f'<HBMarginBalance: {self.symbol}>ID:{self.Id} Type:{self.Type} State:{self.State} Risk-rate:{self.Risk_rate}'
+
+    def __getitem__(self, item):
+        return self.Detail.loc[item]
