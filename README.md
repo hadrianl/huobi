@@ -92,8 +92,8 @@ class MyHandler(BaseHandler):
         BaseHandler.__init__(self, 'just Thread name', topic)
 
     @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
-    def handle(self, msg):  # 实现handle来处理websocket推送的msg
-        print(msg)
+    def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
+        print(topic, msg)
 
 
 handler = MyHandler('market.ethbtc.kline.1min')  # topic为str或者list
@@ -117,8 +117,8 @@ class MyLatestHandler(BaseHandler):
         BaseHandler.__init__(self, 'just Thread name', topic, latest=True)
 
     @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
-    def handle(self, msg):  # 实现handle来处理websocket推送的msg
-        print(msg)
+    def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
+        print(topic, msg)
 ```
 
 ### HBData <h3 id="1.3.6"></h2>
@@ -157,5 +157,5 @@ margin.transferIn('ethusdt', 'eth', 1)
 ```
 
 ### Extra
-- 交易策略运营相关的模块
+- 交易策略运营相关的模块，wechat推送，rpc远程订阅调用等
 详见[extra](https://github.com/hadrianl/huobi/blob/master/huobitrade/extra/log_handler.md)
