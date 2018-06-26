@@ -41,14 +41,16 @@ ws.register_handler(rpc)
 ```
 
 ##
--
+- rpc的客户端，初始化，订阅topic，开启订阅线程, 最后交由handle函数处理
+- 调用远程已经注册的函数
 ```python
 from huobitrade.extra.rpc import RPCClient
 from huobitrade import logger
 logger.setLevel('DEBUG')
-rpcclient = RPCClient('localhost', 'localhost')
+rpcclient = RPCClient('localhost', 'localhost')  # 地址与端口
 rpcclient.subscribe('')  # 订阅topic,如果是''的话，则接受所有topic
 rpcclient.startSUB()  # 开启订阅线程，用handle函数来处理，需要继承RPCClient重载handle函数实现
+rpcclient.handle = lambda topic, msg:print(topic, msg)
 rpcclient.getTime()  # Server端已经注册的函数，可以直接调用
 
 ```
