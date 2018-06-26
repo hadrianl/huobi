@@ -83,7 +83,7 @@ class HBWebsocket:
         """核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列"""
         if 'ch' in msg:
             self.pub_socket.send_multipart(
-                [msg['ch'].encode(), pickle.dumps(msg)])
+                [pickle.dumps(msg['ch']), pickle.dumps(msg)])
 
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')

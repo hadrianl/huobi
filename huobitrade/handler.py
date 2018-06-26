@@ -11,6 +11,7 @@ from threading import Thread, Timer
 from abc import abstractmethod
 import zmq
 import pickle
+from .extra.rpc import RPCServer
 
 
 class BaseHandler:
@@ -41,14 +42,15 @@ class BaseHandler:
         while self.__active:
             try:
 
-                topic, msg = self.sub_socket.recv_multipart()
-                if msg is None:  # 向队列传入None来作为结束信号
+                topic_, msg_ = self.sub_socket.recv_multipart()
+                if msg_ is None:  # 向队列传入None来作为结束信号
                     break
-                msg = pickle.loads(msg)
+                topic = pickle.loads(topic_)
+                msg = pickle.loads(msg_)
                 if not self.lastest:  # 对所有msg做处理
-                    self.handle(msg)
+                    self.handle(topic, msg)
                 elif not self.lastest_handle_thread.is_alive():  # 只对lastest的msg做处理
-                    self.lastest_handle_thread = Thread(target=self.handle, args=(msg, ), name=f'{self.name}-lastest_handle')
+                    self.lastest_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-lastest_handle')
                     self.lastest_handle_thread.setDaemon(True)
                     self.lastest_handle_thread.start()
             except zmq.error.Again:
@@ -76,7 +78,7 @@ class BaseHandler:
         self.thread.start()
 
     @abstractmethod
-    def handle(self, msg):  # 所有handler需要重写这个函数
+    def handle(self, topic, msg):  # 所有handler需要重写这个函数
         ...
 
 
@@ -104,7 +106,7 @@ class TimeHandler:
         self.timer.start()
 
     @abstractmethod
-    def handle(self, msg):
+    def handle(self, topic, msg):
         ...
 
 
@@ -130,8 +132,24 @@ class DBHandler(BaseHandler, pmo.MongoClient):
             logger.error(f'<数据>插入数据库错误-{e}')
 
     @handler_profiler
-    def handle(self, msg):
+    def handle(self, topic, msg):
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')
             data = msg.get('tick') or msg.get('data')
             self.into_db(data, topic)
+
+
+class RPCServerHandler(BaseHandler):
+    def __init__(self, reqPort=6868, pubPort=6869, topic=None):
+        BaseHandler.__init__(self, 'RPCServer', topic)
+        self.rpcServer = RPCServer(reqPort, pubPort)
+        self.rpcServer.startREP()
+
+    def handle(self, topic, msg):
+        self.rpcServer.publish(topic, msg)
+
+    def register_func(self, name, func):
+        self.rpcServer.register_rpcFunc(name, func)
+
+    def unregister_func(self, name):
+        self.rpcServer.unregister_rpcFunc(name)
