@@ -6,7 +6,7 @@
 # @Contact   : 137150224@qq.com
 
 from logging import Handler, Formatter
-from ..datatype import HBData
+from ..datatype import HBMarket
 try:
     import itchat
     from itchat.content import TEXT
@@ -44,7 +44,7 @@ class WeChatHandler(Handler):
         print(f'微信logger->{self.log_receiver}已终止')
 
     def init_reply(self):
-        d = HBData()
+        d = HBMarket()
 
         @self.client.msg_register(TEXT, isGroupChat=True)
         def reply(msg):
