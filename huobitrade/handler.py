@@ -25,34 +25,34 @@ class BaseHandler:
 
         if self.topic:  # 如果topic默认为None，则对所有的topic做处理
             for t in self.topic:
-                self.sub_socket.subscribe(t)
+                self.sub_socket.setsockopt(zmq.SUBSCRIBE, pickle.dumps(t))
         else:
             self.sub_socket.subscribe('')
 
         if kwargs.get('latest', False):  # 可以通过lastest(bool)来订阅最新的数据
-            self.lastest_handle_thread = Thread(name=f'{self.name}-lastest_handle')
-            self.lastest = True
+            self.latest_handle_thread = Thread(name=f'{self.name}-latest_handle')
+            self.latest = True
         else:
-            self.lastest = False
+            self.latest = False
         self.thread = Thread(name=self.name)
         self.__active = False
 
     def run(self):
         self.sub_socket.connect('inproc://HBWS')
+
         while self.__active:
             try:
-
                 topic_, msg_ = self.sub_socket.recv_multipart()
                 if msg_ is None:  # 向队列传入None来作为结束信号
                     break
                 topic = pickle.loads(topic_)
                 msg = pickle.loads(msg_)
-                if not self.lastest:  # 对所有msg做处理
+                if not self.latest:  # 对所有msg做处理
                     self.handle(topic, msg)
-                elif not self.lastest_handle_thread.is_alive():  # 只对lastest的msg做处理
-                    self.lastest_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-lastest_handle')
-                    self.lastest_handle_thread.setDaemon(True)
-                    self.lastest_handle_thread.start()
+                elif not self.latest_handle_thread.is_alive():  # 只对lastest的msg做处理
+                    self.lastet_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-lastest_handle')
+                    self.lastet_handle_thread.setDaemon(True)
+                    self.lastet_handle_thread.start()
             except zmq.error.Again:
                 ...
             except Exception as e:
@@ -60,11 +60,11 @@ class BaseHandler:
         self.sub_socket.disconnect('inproc://HBWS')
 
     def add_topic(self, new_topic):
-        self.sub_socket.subscribe(new_topic)
+        self.sub_socket.setsockopt(zmq.SUBSCRIBE, pickle.dumps(new_topic))
         self.topic.add(new_topic)
 
     def remove_topic(self, topic):
-        self.sub_socket.unsubscribe(topic)
+        self.sub_socket.setsockopt(zmq.UNSUBSCRIBE, pickle.dumps(topic))
         self.topic.remove(topic)
 
     def stop(self):
