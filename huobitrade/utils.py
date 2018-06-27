@@ -238,9 +238,9 @@ def handler_profiler(handle):
     """
 
     @wraps(handle)
-    def func(self, msg):
+    def func(self, topic, msg):
         t0 = time.time()
-        handle(self, msg)
+        handle(self, topic, msg)
         t1 = time.time()
         print(f'{self.name}-handle运行时间:{t1 - t0}s')
 
