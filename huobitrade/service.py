@@ -527,7 +527,7 @@ class HBRestAPI:
         params = {'symbol': symbol, 'states': states}
 
         if types:
-            params[types] = ','.join(types)
+            params['types'] = ','.join(types)
         if start_date:
             sd = parser.parse(start_date).date()
             params['start-date'] = str(sd)
@@ -567,7 +567,7 @@ class HBRestAPI:
         params = {'symbol': symbol}
 
         if types:
-            params[types] = ','.join(types)
+            params['types'] = ','.join(types)
         if start_date:
             sd = parser.parse(start_date).date()
             params['start-date'] = str(sd)
@@ -1135,7 +1135,7 @@ class HBRestAPI_DEC():
         params = {'symbol': symbol, 'states': states}
 
         if types:
-            params[types] = types
+            params['types'] = types
         if start_date:
             sd = parser.parse(start_date).date()
             params['start-date'] = str(sd)
@@ -1182,7 +1182,7 @@ class HBRestAPI_DEC():
         params = {'symbol': symbol}
 
         if types:
-            params[types] = types
+            params['types'] = types
         if start_date:
             sd = parser.parse(start_date).date()
             params['start-date'] = str(sd)
