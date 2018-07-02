@@ -33,6 +33,7 @@ class HBWebsocket:
         self._addr = addr
         self.sub_dict = {}  # 订阅列表
         self.__handlers = []  # 对message做处理的处理函数或处理类
+        self.__req_callbacks = {}
         self.__handle_funcs = {}
         self.ctx = zmq_ctx
         self.pub_socket = self.ctx.socket(zmq.PUB)
@@ -71,6 +72,16 @@ class HBWebsocket:
                     )
                 elif 'rep' in msg:
                     logger.info(f'<请求>Topic:{msg["rep"]}请求数据成功 #{msg["id"]}#')
+                    OnRsp = self.__req_callbacks.get(msg['rep'], [])
+                    def callbackThread(_m):
+                        for cb in OnRsp:
+                            try:
+                                cb(_m)
+                            except Exception as e:
+                                logger.error(f'<请求回调>{msg["rep"]}的回调函数{cb.__name__}异常-{e}')
+                    _t = Thread(target=callbackThread, args=(msg, ))
+                    _t.setDaemon(True)
+                    _t.start()
             elif msg['status'] == 'error':
                 logger.error(
                     f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
@@ -109,6 +120,15 @@ class HBWebsocket:
         else:
             logger.info(f'<订阅>初始化订阅完成')
 
+    def register_onRsp(self, req):
+        def wrapper(_callback):
+            callbackList = self.__req_callbacks.setdefault(req, [])
+            callbackList.append(_callback)
+        return wrapper
+
+    def unregister_onRsp(self, req):
+        self.__req_callbacks.pop(req)
+
     def register_handler(self, handler):  # 注册handler
         if handler not in self.__handlers:
             self.__handlers.append(handler)
@@ -143,8 +163,12 @@ class HBWebsocket:
         return self.__handlers
 
     @property
-    def handle_funs(self):
+    def handle_funcs(self):
         return self.__handle_funcs
+
+    @property
+    def OnRsp_callbacks(self):
+        return self.__req_callbacks
 
     @staticmethod
     def _check_info(**kwargs):
