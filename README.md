@@ -44,12 +44,12 @@ hb.unregister_handle_func(handle, 'market.ethbtc.kline.1min')  # 释放处理函
 
 # --------------------------------------------
 # websocket请求数据是异步请求回调，所以先注册一个回调处理函数，再请求
-# 需求注意的是，同一topic的回调处理是按注册先后顺序同步的，前面的处理函数一旦抛出异常会影响后面函数队列的执行
 @hb.register_onRsp('market.btcusdt.kline.1min')
 def OnRsp_print(msg):
     print(msg)
 
 hb.rep_kline('btcusdt', '1min')
+hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回调处理
 
 ```
 

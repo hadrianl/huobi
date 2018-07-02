@@ -127,7 +127,7 @@ class HBWebsocket:
         return wrapper
 
     def unregister_onRsp(self, req):
-        self.__req_callbacks.pop(req)
+        return self.__req_callbacks.pop(req)
 
     def register_handler(self, handler):  # 注册handler
         if handler not in self.__handlers:
