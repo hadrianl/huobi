@@ -230,18 +230,23 @@ def api_key_post(params, request_path, _async=False):
     return http_post_request(url, params, _async=_async)
 
 
-def handler_profiler(handle):
+def handler_profiler(filename=None):
     """
     handler的性能测试装饰器
-    :param handle:
+    :param filename:
     :return:
     """
+    if filename == None:
+        f = sys.stdout
+    else:
+        f = open(filename, 'w')
+    def _callfunc(handle):
+        @wraps(handle)
+        def func(self, topic, msg):
+            t0 = time.time()
+            handle(self, topic, msg)
+            t1 = time.time()
+            print(f'{self.name}-handle运行时间:{t1 - t0}s', file=f)
 
-    @wraps(handle)
-    def func(self, topic, msg):
-        t0 = time.time()
-        handle(self, topic, msg)
-        t1 = time.time()
-        print(f'{self.name}-handle运行时间:{t1 - t0}s')
-
-    return func
+        return func
+    return _callfunc

@@ -100,7 +100,7 @@ class MyHandler(BaseHandler):
     def __init__(self, topic, *args, **kwargs):
         BaseHandler.__init__(self, 'just Thread name', topic)
 
-    @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
+    @handler_profiler('profiler.csv')  #  可以加上这个装饰器来测试handle函数的执行性能,加参数会输出到单独文件
     def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
         print(topic, msg)
 
@@ -125,7 +125,7 @@ class MyLatestHandler(BaseHandler):
     def __init__(self, topic, *args, **kwargs):
         BaseHandler.__init__(self, 'just Thread name', topic, latest=True)
 
-    @handler_profiler  #  可以加上这个装饰器来测试handle函数的执行性能
+    @handler_profiler()  #  可以加上这个装饰器来测试handle函数的执行性能
     def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
         print(topic, msg)
 ```
