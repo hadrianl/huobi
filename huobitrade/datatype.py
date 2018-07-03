@@ -198,7 +198,7 @@ class HBOrder:
         else:
             raise Exception(f'get order request failed!--{ret}')
 
-    def get_range(self, symbol, states, types, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_range(self, symbol, states, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
         ret = _api.get_orders_info(symbol, states, types, start_date, end_date, _from, direct, size)
         logger.debug(f'get_orders_ret:{ret}')
         if ret and ret['status'] == 'ok':
