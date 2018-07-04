@@ -178,7 +178,7 @@ class HBOrder:
         else:
             raise Exception(f'batchcancel order request failed!--{ret}')
 
-    def get(self, order_id):
+    def get_by_id(self, order_id):
         oi_ret = _api.get_order_info(order_id, _async=True)
         mr_ret = _api.get_order_matchresults(order_id, _async=True)
         ret = _api.async_request([oi_ret, mr_ret])
@@ -198,7 +198,7 @@ class HBOrder:
         else:
             raise Exception(f'get order request failed!--{ret}')
 
-    def get_range(self, symbol, states, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_by_symbol(self, symbol, states, types=None, start_date=None, end_date=None, _from=None, direct=None, size=None):
         ret = _api.get_orders_info(symbol, states, types, start_date, end_date, _from, direct, size)
         logger.debug(f'get_orders_ret:{ret}')
         if ret and ret['status'] == 'ok':
@@ -209,7 +209,7 @@ class HBOrder:
             raise Exception(f'get orders request failed!--{ret}')
 
     def __getitem__(self, item):
-        return self.get(item)
+        return self.get_by_id(item)
 
 
 class HBTrade:
@@ -217,7 +217,7 @@ class HBTrade:
         self.acc_id = acc_id
         self.site = site
 
-    def get(self, order_id):
+    def get_by_id(self, order_id):
         ret = _api.get_order_matchresults(order_id)
         logger.debug(f'trade_ret:{ret}')
         if ret and ret['status'] == 'ok':
@@ -227,7 +227,7 @@ class HBTrade:
         else:
             raise Exception(f'trade results request failed!--{ret}')
 
-    def get_range(self, symbol, types, start_date=None, end_date=None, _from=None, direct=None, size=None):
+    def get_by_symbol(self, symbol, types, start_date=None, end_date=None, _from=None, direct=None, size=None):
         ret = _api.get_orders_matchresults(symbol, types, start_date, end_date, _from, direct, size)
         logger.debug(f'trade_ret:{ret}')
         if ret and ret['status'] == 'ok':
@@ -238,7 +238,7 @@ class HBTrade:
             raise Exception(f'trade results request failed!--{ret}')
 
     def __getitem__(self, item):
-        return self.get(item)
+        return self.get_by_id(item)
 
 
 class HBAccount:

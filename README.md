@@ -161,7 +161,7 @@ account.Pro_XXXXX_balance.update()  # 更新账户结余信息
 account.Pro_XXXXX_order  # 某账户的订单类
 account.Pro_XXXXX_order['order_id']  # 查询某order明细,或者用get方法
 account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
-account.Pro_XXXXX_trade.get('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
+account.Pro_XXXXX_trade.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
 margin.transferIn('ethusdt', 'eth', 1)
 ```
 
