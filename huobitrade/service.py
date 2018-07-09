@@ -787,6 +787,67 @@ class HBRestAPI(metaclass=Singleton):
 
         return api_key_get(params, path, _async=_async)
 
+    def get_etf_config(self, etf_name, _async=False):
+        """
+        查询etf的基本信息
+        :param etf_name:  etf基金名称
+        :param _async:
+        :return:
+        """
+        params = {}
+        path = '/etf/swap/config'
+        params['etf_name'] = etf_name
+
+        return api_key_get(params, path,  _async=_async)
+
+    def etf_swap_in(self, etf_name, amount, _async=False):
+        """
+        换入etf
+        :param etf_name: etf基金名称
+        :param amount:   数量
+        :param _async:
+        :return:
+        """
+
+        params = {}
+        path = '/etf/swap/in'
+        params['etf_name'] = etf_name
+        params['amount'] = amount
+
+        return api_key_post(params, path,  _async=_async)
+
+    def etf_swap_out(self, etf_name, amount, _async=False):
+        """
+        换出etf
+        :param etf_name: etf基金名称
+        :param amount:   数量
+        :param _async:
+        :return:
+        """
+
+        params = {}
+        path = '/etf/swap/out'
+        params['etf_name'] = etf_name
+        params['amount'] = amount
+
+        return api_key_post(params, path,  _async=_async)
+
+    def get_etf_records(self, etf_name, offset, limit, _async=False):
+        """
+        查询etf换入换出明细
+        :param etf_name: eth基金名称
+        :param offset: 开始位置,0为最新一条
+        :param limit:   返回记录条数(0, 100]
+        :param _async:
+        :return:
+        """
+        params = {}
+        path = '/etf/list'
+        params['etf_name'] = etf_name
+        params['offset'] = offset
+        params['limit'] = limit
+
+        return api_key_get(params, path, _async=_async)
 
 class HBRestAPI_DEC():
     def __init__(self, addr=None, key=None, get_acc=False):
