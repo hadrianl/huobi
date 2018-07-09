@@ -9,7 +9,7 @@ import websocket as ws
 import gzip as gz
 import json
 from . import utils as u
-from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx, setUrl, setKey
+from .utils import logger, api_key_get, api_key_post, http_get_request, zmq_ctx, setUrl, setKey, Singleton
 from threading import Thread
 import datetime as dt
 from dateutil import parser
@@ -105,14 +105,16 @@ class HBWebsocket:
         logger.error(f'<错误>on_error:{error}')
 
     def on_close(self, ws):
+        self._active = False
         logger.info(f'<连接>已断开与{self._addr}的连接')
-        if self._active and self._reconn > 0:
+        if self._reconn > 0:
             logger.info(f'<连接>尝试与{self._addr}进行重连')
             self.__start()
             self._reconn -= 1
             time.sleep(self._interval)
 
     def on_open(self, ws):
+        self._active = True
         logger.info(f'<连接>建立与{self._addr}的连接')
         for topic, subbed in self.sub_dict.items():
             msg = {'sub': subbed['topic'], 'id': subbed['id']}
@@ -121,6 +123,11 @@ class HBWebsocket:
             logger.info(f'<订阅>初始化订阅完成')
 
     def register_onRsp(self, req):
+        """
+        添加回调处理函数的装饰器
+        :param req: 具体的topic，如
+        :return:
+        """
         def wrapper(_callback):
             callbackList = self.__req_callbacks.setdefault(req, [])
             callbackList.append(_callback)
@@ -287,16 +294,14 @@ class HBWebsocket:
         )
         self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
         self.ws_thread.start()
-        self._active = True
 
     def stop(self):
         if hasattr(self, 'ws_thread') and self.ws_thread.is_alive():
             self.ws.close()
             self.ws_thread.join()
-            self._active = False
 
 
-class HBRestAPI:
+class HBRestAPI(metaclass=Singleton):
     def __init__(self, addrs=None, keys=None, get_acc=False):
         """
         火币REST API封装

@@ -11,7 +11,7 @@
 - 深度数据则命名为depth
 
 ## Lastest
-- 加入了restapi的异步并发请求
+- restapi修改为单例模式
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -136,9 +136,9 @@ class MyLatestHandler(BaseHandler):
 from huobitrade import setKey
 from huobitrade.datatype import HBData
 setKey('acess_key', 'secret_key')
-data = HBMarket()
-account = HBAccount()
-margin = HBMargin()
+data = HBMarket()  # 行情接口类
+account = HBAccount()  # 交易接口类
+margin = HBMargin()  # 借贷接口类
 
 data.omgeth
 # <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
@@ -163,6 +163,9 @@ account.Pro_XXXXX_order['order_id']  # 查询某order明细,或者用get方法
 account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
 account.Pro_XXXXX_trade.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
 margin.transferIn('ethusdt', 'eth', 1)
+ethusdt_margin_info = margin['ethusdt']  # 或者用getBalance
+ethusdt_margin_info.balance  # ethusdt交易对的保证金结余信息
+
 ```
 
 ### Extra
