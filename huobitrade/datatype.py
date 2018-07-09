@@ -362,24 +362,41 @@ class HBMargin:
 class HBMarginBalance:
     def __init__(self, symbol):
         ret = _api.get_margin_balance(symbol)
+        logger.debug(f'<保证金结余>信息:{ret}')
         if ret and ret['status'] == 'ok':
-            data = ret['data']
-            self.Id = data['id']
-            self.Type = data['type']
-            self.State = data['state']
-            self.Symbol = data['symbol']
-            self.Fl_price = data['fl-price']
-            self.Fl_type = data['fl-type']
-            self.Risk_rate = data['safe']
-            self.Detail = pd.DataFrame(data['list']).set_index('currency')
+            balance = {}
+            for d in ret['data']:
+                data = balance.setdefault(d['id'], {})
+                data['id'] = d['id']
+                data['type'] = d['type']
+                data['state'] = d['state']
+                data['symbol'] = d['symbol']
+                data['fl-price'] = d['fl-price']
+                data['fl-type'] = d['fl-type']
+                data['risk-rate'] = d['risk-rate']
+                data['detail'] = pd.DataFrame(d['list']).set_index('currency')
         else:
             raise Exception(f'get balance request failed--{ret}')
 
+        self.__balance = balance
+
     def __repr__(self):
-        return f'<HBMarginBalance: {self.symbol}>ID:{self.Id} Type:{self.Type} State:{self.State} Risk-rate:{self.Risk_rate}'
+        info = []
+        for b in self._balance.values():
+            info.append(f'<HBMarginBalance: {b["symbol"]}>ID:{b["id"]} Type:{b["type"]} State:{b["state"]} Risk-rate:{b["risk-rate"]}')
+            info = '\n'.join(info)
+        return info
 
     def __str__(self):
-        return f'<HBMarginBalance: {self.symbol}>ID:{self.Id} Type:{self.Type} State:{self.State} Risk-rate:{self.Risk_rate}'
+        info = []
+        for b in self.__balance:
+            info.append(f'<HBMarginBalance: {b["symbol"]}>ID:{b["id"]} Type:{b["type"]} State:{b["state"]} Risk-rate:{b["risk-rate"]}')
+            info = '\n'.join(info)
+        return info
 
     def __getitem__(self, item):
-        return self.Detail.loc[item]
+        return self.__balance[item]
+
+    @property
+    def balance(self):
+        return self.__balance
