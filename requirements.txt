@@ -3,3 +3,4 @@ websocket-client
 requests
 python-dateutil
 pandas
+ecdsa

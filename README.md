@@ -11,8 +11,9 @@
 - 深度数据则命名为depth
 
 ## Lastest
-- restapi修改为单例模式
-
+- 跟随火币的安全策略更新了一波,需要用自己生成公钥密钥来进行ecdsa非对称加密,setKey新增了private_key参数
+- 需要注意的是private_key的签名函数为了保持与官网demo一致，采用的是ecdsa库的from_pem来加载的，所以key是需要以"-----BEGIN EC PRIVATE KEY-----"开头的结构的
+- 详情看下面usage
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
@@ -59,9 +60,15 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
+# private_key = open('privatekey.pem').read()
+private_key = '''-----BEGIN EC PRIVATE KEY-----
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+-----END EC PRIVATE KEY-----'''
 
-setKey('your acess_key', 'you secret_key')  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥
-api = HBRestAPI()  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
+setKey('your acess_key', 'you secret_key', private_key)  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥,private_key可以用上面两种其中一种
+api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
 # 可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
 

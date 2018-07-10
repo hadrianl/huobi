@@ -13,6 +13,7 @@ import base64
 import datetime
 import hashlib
 import hmac
+from ecdsa import SigningKey
 import json
 import urllib
 import urllib.parse
@@ -66,6 +67,7 @@ ORDER_STATES = {
 }
 ACCESS_KEY = ""
 SECRET_KEY = ""
+PRIVATE_KEY = ""
 
 ETF_SWAP_CODE = {200: '正常',
                  10404: '基金代码不正确或不存在',
@@ -91,17 +93,16 @@ TRADE_URL = 'https://api.huobi.br.com'
 ACCOUNT_ID = None
 
 
-def setKey(access_key, secret_key):
-    global ACCESS_KEY, SECRET_KEY
+def setKey(access_key, secret_key, private_key):
+    global ACCESS_KEY, SECRET_KEY, PRIVATE_KEY
     ACCESS_KEY = access_key
     SECRET_KEY = secret_key
-
+    PRIVATE_KEY = private_key
 
 def setUrl(market_url, trade_url):
     global MARKET_URL, TRADE_URL
     MARKET_URL = market_url
     TRADE_URL = trade_url
-
 
 def createSign(pParams, method, host_url, request_path, secret_key):
     """
@@ -125,6 +126,13 @@ def createSign(pParams, method, host_url, request_path, secret_key):
     signature = signature.decode()
     return signature
 
+def createPrivateSign(secret_sign, private_key):
+    signingkey = SigningKey.from_pem(private_key, hashfunc=hashlib.sha256)
+    secret_sign = secret_sign.encode(encoding='UTF8')
+
+    privateSignature = signingkey.sign(secret_sign)
+    privateSignature = base64.b64encode(privateSignature)
+    return privateSignature
 
 def http_get_request(url, params, add_to_headers=None, _async=False):
     """
@@ -212,9 +220,10 @@ def api_key_get(params, request_path, _async=False):
     host_url = TRADE_URL
     host_name = urllib.parse.urlparse(host_url).hostname
     host_name = host_name.lower()
-    params['Signature'] = createSign(params, method, host_name, request_path,
+    secret_sign = createSign(params, method, host_name, request_path,
                                      SECRET_KEY)
-
+    params['Signature'] = secret_sign
+    params['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
     url = host_url + request_path
     return http_get_request(url, params, _async=_async)
 
@@ -238,8 +247,10 @@ def api_key_post(params, request_path, _async=False):
     host_url = TRADE_URL
     host_name = urllib.parse.urlparse(host_url).hostname
     host_name = host_name.lower()
-    params_to_sign['Signature'] = createSign(params_to_sign, method, host_name,
+    secret_sign = createSign(params_to_sign, method, host_name,
                                              request_path, SECRET_KEY)
+    params_to_sign['Signature'] = secret_sign
+    params_to_sign['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
     url = host_url + request_path + '?' + urllib.parse.urlencode(params_to_sign)
     return http_post_request(url, params, _async=_async)
 
