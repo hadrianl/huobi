@@ -131,7 +131,6 @@ class DBHandler(BaseHandler, pmo.MongoClient):
         except Exception as e:
             logger.error(f'<数据>插入数据库错误-{e}')
 
-    @handler_profiler
     def handle(self, topic, msg):
         if 'ch' in msg or 'rep' in msg:
             topic = msg.get('ch') or msg.get('rep')
