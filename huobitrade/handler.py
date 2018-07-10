@@ -29,7 +29,7 @@ class BaseHandler:
         else:
             self.sub_socket.subscribe('')
 
-        if kwargs.get('latest', False):  # 可以通过lastest(bool)来订阅最新的数据
+        if kwargs.get('latest', False):  # 可以通过latest(bool)来订阅最新的数据
             self.latest_handle_thread = Thread(name=f'{self.name}-latest_handle')
             self.latest = True
         else:
@@ -39,7 +39,6 @@ class BaseHandler:
 
     def run(self):
         self.sub_socket.connect('inproc://HBWS')
-
         while self.__active:
             try:
                 topic_, msg_ = self.sub_socket.recv_multipart()
@@ -49,10 +48,10 @@ class BaseHandler:
                 msg = pickle.loads(msg_)
                 if not self.latest:  # 对所有msg做处理
                     self.handle(topic, msg)
-                elif not self.latest_handle_thread.is_alive():  # 只对lastest的msg做处理
-                    self.lastet_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-lastest_handle')
-                    self.lastet_handle_thread.setDaemon(True)
-                    self.lastet_handle_thread.start()
+                elif not self.latest_handle_thread.is_alive():  # 只对latest的msg做处理
+                    self.latest_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-latest_handle')
+                    self.latest_handle_thread.setDaemon(True)
+                    self.latest_handle_thread.start()
             except zmq.error.Again:
                 ...
             except Exception as e:
