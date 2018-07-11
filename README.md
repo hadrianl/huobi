@@ -11,6 +11,7 @@
 - 深度数据则命名为depth
 
 ## Lastest
+-  加入7月的更新内容，详见火币7月更新日志
 - 跟随火币的安全策略更新了一波,需要用自己生成公钥密钥来进行ecdsa非对称加密,setKey新增了private_key参数
 - 需要注意的是private_key的签名函数为了保持与官网demo一致，采用的是ecdsa库的from_pem来加载的，所以key是需要以"-----BEGIN EC PRIVATE KEY-----"开头的结构的
 - 详情看下面usage
@@ -49,7 +50,7 @@ hb.unregister_handle_func(handle, 'market.ethbtc.kline.1min')  # 释放处理函
 def OnRsp_print(msg):
     print(msg)
 
-hb.rep_kline('btcusdt', '1min')
+hb.req_kline('btcusdt', '1min')
 hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回调处理
 
 ```
@@ -155,7 +156,7 @@ data.omgeth.depth
 # <<class 'huobitrade.datatype.HBDepth'> for omgeth>
 data.omgeth.ticker
 # <<class 'huobitrade.datatype.HBTicker'> for omgeth>
-data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为1000
+data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为2000
 data.omgeth.kline.latest
 data.omgeth.kline.last_24_hour
 data.omgeth.depth.step0  # step0,1,2,3,4,5

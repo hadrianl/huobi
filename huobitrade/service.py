@@ -253,7 +253,7 @@ class HBWebsocket:
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送取消订阅请求 #{_id}#')
 
-    def rep_kline(self, symbol, period, _id='', **kwargs):
+    def req_kline(self, symbol, period, _id='', **kwargs):
         if self._check_info(symbol=symbol, period=period):
             msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
             if '_from' in kwargs:
@@ -267,17 +267,21 @@ class HBWebsocket:
             self.send_message(msg)
             logger.info(f'<请求>kline-发送请求*{symbol}*@{period} #{_id}#')
 
-    def rep_depth(self, symbol, depth=0, _id=''):
-        if self._check_info(symbol=symbol, depth=depth):
+    def req_depth(self, symbol, depth=0, _id=''):
+        if self._check_info(depth=depth):
             msg = {'req': f'market.{symbol}.depth.{u.DEPTH[depth]}', 'id': _id}
             self.send_message(msg)
             logger.info(f'<请求>depth-发送请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
 
-    def rep_tick(self, symbol, _id=''):
-        if self._check_info(symbol=symbol):
-            msg = {'rep': f'market.{symbol}.trade.detail', 'id': _id}
-            self.send_message(msg)
-            logger.info(f'<请求>tick-发送请求*{symbol}* #{_id}#')
+    def req_tick(self, symbol, _id=''):
+        msg = {'rep': f'market.{symbol}.trade.detail', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<请求>tick-发送请求*{symbol}* #{_id}#')
+
+    def req_symbol(self, symbol, _id=''):
+        msg = {'rep': f'market.{symbol}.detail', 'id': _id}
+        self.send_message(msg)
+        logger.info(f'<请求>symbol-发送请求*{symbol}* #{_id}#')
 
     def run(self):
         if not hasattr(self, 'ws_thread') or not self.ws_thread.is_alive():
@@ -499,7 +503,7 @@ class HBRestAPI(metaclass=Singleton):
         path = f'/v1/order/orders/{order_id}/submitcancel'
         return api_key_post(params, path, _async=_async)
 
-    def batchcancel_order(self, order_ids: list, _async=False):
+    def batchcancel_orders(self, order_ids: list, _async=False):
         """
         批量撤销订单
         :param order_id:
@@ -510,6 +514,32 @@ class HBRestAPI(metaclass=Singleton):
         path = f'/v1/order/orders/batchcancel'
         return api_key_post(params, path, _async=_async)
 
+    def batchcancel_openOrders(self, acc_id, symbol=None, side=None, size=None, _async=False):
+        """
+        批量撤销未成交订单
+        :param acc_id: 帐号ID
+        :param symbol: 交易对
+        :param side: 方向
+        :param size:
+        :param _async:
+        :return:
+        """
+
+        params = {}
+        path = '/v1/order/batchCancelOpenOrders'
+        params['account-id'] = acc_id
+        if symbol:
+            params['symbol'] = symbol
+        if side:
+            assert side in ['buy', 'sell']
+            params['side'] = side
+        if size:
+            params['size'] = size
+
+        return api_key_get(params, path, _async=_async)
+
+
+
     def get_order_info(self, order_id, _async=False):
         """
         查询某个订单
@@ -518,6 +548,28 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/order/orders/{order_id}'
+        return api_key_get(params, path, _async=_async)
+
+    def get_openOrders(self, acc_id=None, symbol=None, side=None, size=None, _async=False):
+        """
+        查询未成交订单
+        :param acc_id: 帐号ID
+        :param symbol: 交易对ID
+        :param side: 交易方向，'buy'或者'sell'
+        :param size: 记录条数，最大500
+        :return:
+        """
+        params = {}
+        path = '/v1/order/openOrders'
+        if all([acc_id, symbol]):
+            params['account-id'] = acc_id
+            params['symbol'] = symbol
+        if side:
+            assert side in ['buy', 'sell']
+            params['side'] = side
+        if size:
+            params['size'] = size
+
         return api_key_get(params, path, _async=_async)
 
     def get_order_matchresults(self, order_id, _async=False):
@@ -747,7 +799,6 @@ class HBRestAPI(metaclass=Singleton):
 
     def get_loan_orders(self,
                         symbol,
-                        currency,
                         states=None,
                         start_date=None,
                         end_date=None,
@@ -756,7 +807,7 @@ class HBRestAPI(metaclass=Singleton):
                         size=None,
                         _async=False):
 
-        params = {'symbol': symbol, 'currency': currency}
+        params = {'symbol': symbol}
         if states:
             params['states'] = states
         if start_date:
@@ -774,7 +825,7 @@ class HBRestAPI(metaclass=Singleton):
         path = '/v1/margin/loan-orders'
         return api_key_get(params, path, _async=_async)
 
-    def get_margin_balance(self, symbol, _async=False):
+    def get_margin_balance(self, symbol=None, _async=False):
         """
         借贷账户详情,支持查询单个币种
         :param symbol:
@@ -846,6 +897,24 @@ class HBRestAPI(metaclass=Singleton):
         params['etf_name'] = etf_name
         params['offset'] = offset
         params['limit'] = limit
+
+        return api_key_get(params, path, _async=_async)
+
+    def get_quotation_kline(self, symbol, period, limit=None, _async=False):
+        """
+        获取etf净值
+        :param symbol: etf名称
+        :param period: K线类型
+        :param limit: 获取数量
+        :param _async:
+        :return:
+        """
+        params = {}
+        path = '/quotation/market/history/kline'
+        params['symbol'] = symbol
+        params['period'] = period
+        if limit:
+            params['limit'] = limit
 
         return api_key_get(params, path, _async=_async)
 
