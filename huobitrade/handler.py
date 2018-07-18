@@ -126,7 +126,10 @@ class DBHandler(BaseHandler, pmo.MongoClient):
                         collection.update({'id': d['id']}, d, upsert=True)
             elif 'trade.detail' in topic:
                 for d in data:
+                    d['id'] = str(d['id'])
                     collection.update({'id': d['id']}, d, upsert=True)
+            elif 'depth' in topic:
+                collection.update({'version': data['version']}, data, upsert=True)
         except Exception as e:
             logger.error(f'<数据>插入数据库错误-{e}')
 

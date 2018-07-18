@@ -6,8 +6,9 @@
 # @Contact   : 137150224@qq.com
 from huobitrade.service import HBWebsocket, HBRestAPI
 from huobitrade.handler import DBHandler
-from huobitrade import setKey
+from huobitrade import setKey, logger
 import time
+logger.setLevel('DEBUG')
 setKey('access_key', 'secret_key')
 
 hb = HBWebsocket()
