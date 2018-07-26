@@ -11,10 +11,8 @@
 - 深度数据则命名为depth
 
 ## Lastest
--  加入7月的更新内容，详见火币7月更新日志
-- 跟随火币的安全策略更新了一波,需要用自己生成公钥密钥来进行ecdsa非对称加密,setKey新增了private_key参数
-- 需要注意的是private_key的签名函数为了保持与官网demo一致，采用的是ecdsa库的from_pem来加载的，所以key是需要以"-----BEGIN EC PRIVATE KEY-----"开头的结构的
-- 详情看下面usage
+- 把private key修改回来，火币暂停推ecdsa加密方案，set_key时候让private_key默认为None就好了
+
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)

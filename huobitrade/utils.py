@@ -93,7 +93,7 @@ TRADE_URL = 'https://api.huobi.br.com'
 ACCOUNT_ID = None
 
 
-def setKey(access_key, secret_key, private_key):
+def setKey(access_key, secret_key, private_key=None):
     global ACCESS_KEY, SECRET_KEY, PRIVATE_KEY
     ACCESS_KEY = access_key
     SECRET_KEY = secret_key
@@ -223,7 +223,8 @@ def api_key_get(params, request_path, _async=False):
     secret_sign = createSign(params, method, host_name, request_path,
                                      SECRET_KEY)
     params['Signature'] = secret_sign
-    params['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
+    if PRIVATE_KEY:
+        params['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
     url = host_url + request_path
     return http_get_request(url, params, _async=_async)
 
@@ -250,7 +251,8 @@ def api_key_post(params, request_path, _async=False):
     secret_sign = createSign(params_to_sign, method, host_name,
                                              request_path, SECRET_KEY)
     params_to_sign['Signature'] = secret_sign
-    params_to_sign['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
+    if PRIVATE_KEY:
+        params_to_sign['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
     url = host_url + request_path + '?' + urllib.parse.urlencode(params_to_sign)
     return http_post_request(url, params, _async=_async)
 
