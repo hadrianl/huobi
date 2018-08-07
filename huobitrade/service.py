@@ -918,6 +918,50 @@ class HBRestAPI(metaclass=Singleton):
 
         return api_key_get(params, path, _async=_async)
 
+    def transfer(self, sub_uid, currency, amount, transfer_type, _async=False):
+        """
+        母账户执行子账户划转
+        :param sub_uid: 子账户id
+        :param currency: 币种
+        :param amount: 划转金额
+        :param transfer_type: 划转类型，master-transfer-in（子账户划转给母账户虚拟币）/ master-transfer-out （母账户划转给子账户虚拟币）/master-point-transfer-in （子账户划转给母账户点卡）/master-point-transfer-out（母账户划转给子账户点卡）
+        :param _async: 是否异步执行
+        :return:
+        """
+        params = {}
+        path = '/v1/subuser/transfer'
+        params['sub-uid'] = sub_uid
+        params['currency'] = currency
+        params['amount'] = amount
+        params['type'] = transfer_type
+
+        return api_key_post(params, path, _async=_async)
+
+    def get_aggregate_balance(self, _async=False):
+        """
+        查询所有子账户汇总
+        :param _async: 是否异步执行
+        :return:
+        """
+        params = {}
+        path = '/v1/subuser/aggregate-balance'
+        return  api_key_get(params, path, _async=_async)
+
+    def get_sub_balance(self, sub_id, _async=False):
+        """
+        查询子账户各币种账户余额
+        :param sub_uid: 子账户id
+        :param _async:
+        :return:
+        """
+
+        params = {}
+        params['sub-uid'] = sub_id
+        path = '/v1/account/accounts/{sub-uid}'
+        return api_key_get(params, path, _async=_async)
+
+
+
 class HBRestAPI_DEC():
     def __init__(self, addr=None, key=None, get_acc=False):
         """

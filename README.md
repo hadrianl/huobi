@@ -11,6 +11,7 @@
 - 深度数据则命名为depth
 
 ## Lastest
+- 增加了母子账户的api（transfer，get_aggregate_balance， get_sub_balance）
 - 把private key修改回来，火币暂停推ecdsa加密方案，set_key时候让private_key默认为None就好了
 
 
