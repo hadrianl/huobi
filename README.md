@@ -2,7 +2,10 @@
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过pub_msg来分发到个各topic下的Handler线程来处理
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
-- 目前处于开发阶段，估计含有巨量的**BUG**，慎用！
+- 兼容win，mac，linux，python版本必须3.6或以上，因为使用了大量的f***
+- 目前已经稳定使用，后续会基于框架提供如行情持久化，交易数据持久化等handler
+- 暂时先不维护Restful API-Decoration版，所以火币API8月份之后的修改将会导致其失效，有需求的小伙伴可以issues一波，再考虑去维护吧！
+- 有疑问或者需要支持和交流的小伙伴可以联系我， QQ：137150224
 
 ## Notice
 - 该封装的函数命名跟火币本身的请求命名表达不太一致
@@ -27,6 +30,28 @@ pip install huobitrade
 ```
 
 ## Usage
+- 实现长连订阅策略最核心的部分是实现handler里面的handle函数
+    1. 通过HBWebsocket实例的sub开头的函数订阅需要的topic
+    2. 通过继承BaseHandler的实例的初始化或者add_topic来增加对相关topic，实现handle函数来处理相关topic的消息
+    3. 通过HBWebsocket实例的register_handler来注册handler
+    4. handler初始化中有个latest，建议使用depth或者ticker数据来做处理，且策略性能不高的时候使用它
+- 基于websocket的接口都是用异步回调的方式来处理
+    1. 首先需要用HBWebsocket的装饰器register_onRsp来绑定实现一个处理相关的topic消息的函数
+    2. 再用req开头的函数来请求相关topic数据，回调的数据将会交给回调函数处理
+- 交易相关的都是用的restful api（因为火币还没推出websocket的交易接口）
+    1. setKey是必要的，如果需要用到交易相关请求的话，只是请求行情的话可以不设。
+    2. HBRestAPI是单例类，所以多次初始化也木有啥大问题，如在handler里面初始化
+    3. 每个请求都有一个_async参数来提供异步请求，建议尽量使用它，具体用法是先初始化数个请求到一个list，再用async_request一次性向服务器发起请求
+    4. 子账户体系因为刚出，没用过，可能会有问题，有bug欢迎pr
+- 另外还提供了几个简单易用的封装类
+    1. HBMarket, HBAccount, HBMargin分别是行情，账户和借贷账户类，里面提供了大部分属性调用请求，均基于HBRestAPI
+    2. 一般情景下应该是可以替代HBRestAPI的使用的
+- 最后还提供了数个运营管理的工具
+    1. 微信推送handler，可以实现一些交易信息推送之类的，但是建议朋友们慎用，因为鄙人有试过一天推送几千条信息被封禁了半个月微信web端登陆的经历
+    2. rpc模块，具体用法就不细说了，懂的应该都懂的，看下源码就知道咋用啦
+- 最后的最后，其实基于这个项目，还有附带的另外一个可视化web的项目没有放出来
+    1. 基于flask写的一个用于查询当日成交明细和成交分布图，很丑很简陋
+    2. 有兴趣的小伙伴可以联系我
 
 ### WebSocket API
 ```python
@@ -141,7 +166,7 @@ class MyLatestHandler(BaseHandler):
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
 ```python
 from huobitrade import setKey
-from huobitrade.datatype import HBData
+from huobitrade.datatype import HBMarket, HBAccount, HBMargin
 setKey('acess_key', 'secret_key')
 data = HBMarket()  # 行情接口类
 account = HBAccount()  # 交易接口类
