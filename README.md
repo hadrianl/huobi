@@ -81,7 +81,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 
 ### Restful API
 - restapi需要先用`setKey`设置密钥
-- 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要设置url用`from huobitrade import setUrl`
+- 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要用`from huobitrade import setUrl`设置url
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
