@@ -86,15 +86,12 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
 private_key = open('privatekey.pem').read()
-# private_key = ''
 
 setKey('your acess_key', 'you secret_key', private_key)  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥,private_key可以用上面两种其中一种
-api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
-# 可用api.set_acc_id('you_account_id')
+api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用.也可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
 
-# 异步请求
-api = HBRestAPI(get_acc=True)
+api = HBRestAPI(get_acc=True)　# 异步请求
 klines = api.get_kline('omgeth', _async=True)
 symbols = api.get_symbols(_async=True)
 results = api.async_request([klines, symbols])
@@ -169,13 +166,13 @@ account = HBAccount()  # 交易接口类
 margin = HBMargin()  # 借贷接口类
 
 data.omgeth
-# <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
+　# <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
 data.omgeth.kline
-# <<class 'huobitrade.datatype.HBKline'> for omgeth>
+　# <<class 'huobitrade.datatype.HBKline'> for omgeth>
 data.omgeth.depth
-# <<class 'huobitrade.datatype.HBDepth'> for omgeth>
+　# <<class 'huobitrade.datatype.HBDepth'> for omgeth>
 data.omgeth.ticker
-# <<class 'huobitrade.datatype.HBTicker'> for omgeth>
+　# <<class 'huobitrade.datatype.HBTicker'> for omgeth>
 data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为2000
 data.omgeth.kline.latest
 data.omgeth.kline.last_24_hour
