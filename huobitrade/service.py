@@ -112,6 +112,10 @@ class HBWebsocket:
             self.__start()
             self._reconn -= 1
             time.sleep(self._interval)
+        else:
+            logger.info(f'<连接>尝试与{self._addr}进行重连')
+            self.__start()
+            time.sleep(self._interval)
 
     def on_open(self, ws):
         self._active = True
