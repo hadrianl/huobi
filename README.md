@@ -86,11 +86,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
 private_key = open('privatekey.pem').read()
-# private_key = '''-----BEGIN EC PRIVATE KEY-----
-# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# -----END EC PRIVATE KEY-----'''
+# private_key = ''
 
 setKey('your acess_key', 'you secret_key', private_key)  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥,private_key可以用上面两种其中一种
 api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用
