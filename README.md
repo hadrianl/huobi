@@ -82,6 +82,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 ### Restful API
 - restapi需要先用`setKey`设置密钥
 - 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要用`from huobitrade import setUrl`设置url
+
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
@@ -101,6 +102,7 @@ for r in results:
 
 ### Restful API-Decoration    （Experimental）
 - 用装饰器来初始化回调处理函数
+
 ```python
 from huobitrade.service import HBRestAPI_DEC
 from huobitrade import setKey
@@ -117,6 +119,7 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 
 ### Message Handler
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
+
 ```python
 from huobitrade.handler import BaseHandler
 fromm huobitrade.util import handler_profiler
@@ -137,6 +140,7 @@ hb.register_handler(handler)  # 通过register来把handler注册到相应的top
 
 ```
 - 内置实现了一个mongodb的`DBHandler`
+
 ```python
 from huobitrade.handler import DBHandler
 handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
@@ -157,6 +161,7 @@ class MyLatestHandler(BaseHandler):
 
 ### HBData <h3 id="1.3.6"></h2>
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
+
 ```python
 from huobitrade import setKey
 from huobitrade.datatype import HBMarket, HBAccount, HBMargin
