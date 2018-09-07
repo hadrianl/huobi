@@ -1,4 +1,4 @@
-# 火币API的Python版
+# [火币API的Python版](https://hadrianl.github.io/huobi/)
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过`pub_msg`来分发到个各`topic`下的`Handler`线程来处理
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
