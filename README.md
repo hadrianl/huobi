@@ -28,11 +28,11 @@
     - [2. Usage](#2-usage)
         - [2.1 WebSocket API](#21-websocket-api)
         - [2.2 Restful API](#22-restful-api)
-        - [2.3 Restful API-Decoration    （Experimental）](#23-restful-api-decoration（experimental）)
+        - [2.3 Restful API-Decoration    （Experimental）](#23-restful-api-decorationexperimental)
         - [2.4 Message Handler](#24-message-handler)
         - [2.5 Latest Message Handler](#25-latest-message-handler)
         - [2.6 HBData](#26-hbdata)
-    -[3. Extra](#3-extra)
+    - [3. Extra](#3-extra)
 
 
 
