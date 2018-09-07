@@ -24,13 +24,15 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
 
 - [HuoBi Trading]
-    - [1. Installation]
-    - [2. Usage]
-        - [2.1 WebSocket API]
-        - [2.2 Restful API]
-        - [2.3 Restful API-Decoration    （Experimental）]
-        - [2.4 Message Handler]
-        - [2.5 Latest Message Handler]
+    - [1. Installation](#1)
+    - [2. Usage](#2)
+        - [2.1 WebSocket API](#21)
+        - [2.2 Restful API](#22)
+        - [2.3 Restful API-Decoration    （Experimental）](#23)
+        - [2.4 Message Handler](#24)
+        - [2.5 Latest Message Handler](#25)
+        - [2.6 HBData](#26)
+    -[3. Extra](#3)
 
 
 
