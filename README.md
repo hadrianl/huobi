@@ -23,7 +23,7 @@
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
 
-- [HuoBi Trading]
+- [HuoBi Trading](#火币api的python版)
     - [1. Installation](#1-installation)
     - [2. Usage](#2-usage)
         - [2.1 WebSocket API](#21-websocket-api)
