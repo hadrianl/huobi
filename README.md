@@ -22,18 +22,18 @@
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
-<!-- TOC -->
+
 - [HuoBi Trading]
     - [1. Installation](#1-installation)
-    - [2. Usage](#2-Usage)
+    - [2. Usage](#2-usage)
         - [2.1 WebSocket API](#21-websocket-api)
-        - [2.2 Restful API](#22)
-        - [2.3 Restful API-Decoration    （Experimental）](#23)
-        - [2.4 Message Handler](#24)
-        - [2.5 Latest Message Handler](#25)
-        - [2.6 HBData](#26)
-    -[3. Extra](#3)
-<!-- /TOC -->
+        - [2.2 Restful API](#22-restful-api)
+        - [2.3 Restful API-Decoration    （Experimental）](#23-restful-api-decoration（experimental）)
+        - [2.4 Message Handler](#24-message-handler)
+        - [2.5 Latest Message Handler](#25-latest-message-handler)
+        - [2.6 HBData](#26-hbdata)
+    -[3. Extra](#3-extra)
+
 
 
 
@@ -113,7 +113,7 @@ for r in results:
     print(r)
 ```
 
-### 2.3 Restful API-Decoration    （Experimental）
+### 2.3 Restful API-Decoration（Experimental）
 - 用装饰器来初始化回调处理函数
 
 ```python
@@ -172,7 +172,7 @@ class MyLatestHandler(BaseHandler):
         print(topic, msg)
 ```
 
-### 2.6 HBData <h3 id="1.3.6"></h2>
+### 2.6 HBData
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
 
 ```python
