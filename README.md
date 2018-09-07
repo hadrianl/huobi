@@ -23,13 +23,24 @@
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
 
+- [HuoBi Trading]
+    - [1. Installation]
+    - [2. Usage]
+        - [2.1 WebSocket API]
+        - [2.2 Restful API]
+        - [2.3 Restful API-Decoration    （Experimental）]
+        - [2.4 Message Handler]
+        - [2.5 Latest Message Handler]
 
-## Installation
+
+
+
+## 1. Installation
 ```sh
 pip install huobitrade
 ```
 
-## Usage
+## 2. Usage
 - 实现长连订阅策略最核心的部分是实现handler里面的handle函数
     1. 通过`HBWebsocket`实例的`sub`开头的函数订阅需要的topic
     2. 通过继承`BaseHandler`的实例的初始化或者`add_topic`来增加对相关topic，实现`handl`e函数来处理相关topic的消息
@@ -53,7 +64,7 @@ pip install huobitrade
     1. 基于`flask`写的一个用于查询当日成交明细和成交分布图，很丑很简陋
     2. 有兴趣的小伙伴可以联系我
 
-### WebSocket API
+### 2.1 WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
 
@@ -79,7 +90,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 
 ```
 
-### Restful API
+### 2.2 Restful API
 - restapi需要先用`setKey`设置密钥
 - 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要用`from huobitrade import setUrl`设置url
 
@@ -100,7 +111,7 @@ for r in results:
     print(r)
 ```
 
-### Restful API-Decoration    （Experimental）
+### 2.3 Restful API-Decoration    （Experimental）
 - 用装饰器来初始化回调处理函数
 
 ```python
@@ -117,7 +128,7 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 
 ```
 
-### Message Handler
+### 2.4 Message Handler
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 
 ```python
@@ -147,7 +158,7 @@ handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
 hb.register_handler(handler)
 ```
 
-### Latest Message Handler
+### 2.5 Latest Message Handler
 - 基于handler函数根据策略复杂度和性能的的不同造成对message的处理时间不一样，可能造成快生产慢消费的情况，增加lastest参数，每次都是handle最新的message
 ```python
 class MyLatestHandler(BaseHandler):
@@ -159,7 +170,7 @@ class MyLatestHandler(BaseHandler):
         print(topic, msg)
 ```
 
-### HBData <h3 id="1.3.6"></h2>
+### 2.6 HBData <h3 id="1.3.6"></h2>
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
 
 ```python
@@ -198,6 +209,6 @@ ethusdt_margin_info.balance  # ethusdt交易对的保证金结余信息
 
 ```
 
-### Extra
+## 3. Extra
 - 交易策略运营相关的模块，`wechat推送`，`rpc远程订阅调用`等
 详见[extra](https://github.com/hadrianl/huobi/blob/master/huobitrade/extra/log_handler.md)
