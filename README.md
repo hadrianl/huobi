@@ -22,7 +22,7 @@
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
-
+<!-- TOC -->
 - [HuoBi Trading]
     - [1. Installation](#1-Installation)
     - [2. Usage](#2)
@@ -33,7 +33,7 @@
         - [2.5 Latest Message Handler](#25)
         - [2.6 HBData](#26)
     -[3. Extra](#3)
-
+<!-- /TOC -->
 
 
 
