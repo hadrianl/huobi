@@ -24,9 +24,9 @@
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)
 <!-- TOC -->
 - [HuoBi Trading]
-    - [1. Installation](#1-Installation)
-    - [2. Usage](#2)
-        - [2.1 WebSocket API](#21)
+    - [1. Installation](#1-installation)
+    - [2. Usage](#2-Usage)
+        - [2.1 WebSocket API](#21-websocket-api)
         - [2.2 Restful API](#22)
         - [2.3 Restful API-Decoration    （Experimental）](#23)
         - [2.4 Message Handler](#24)
