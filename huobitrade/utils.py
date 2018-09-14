@@ -22,6 +22,7 @@ import requests
 from functools import wraps
 import time
 import zmq
+from enum import Enum
 
 _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
@@ -49,6 +50,8 @@ DEPTH = {
     4: 'step4',
     5: 'step5'
 }
+
+
 ORDER_TYPE = {
     'buy-market': '市价买',
     'sell-market': '市价卖',
@@ -65,6 +68,20 @@ ORDER_STATES = {
     'filled': '完全成交',
     'canceled': '已撤销'
 }
+
+ORDER_SOURCE = {
+'spot-web':	'现货 Web 交易单',
+'spot-api':	'现货 Api 交易单',
+'spot-app':	'现货 App 交易单',
+'margin-web': '借贷 Web 交易单',
+'margin-api': '借贷 Api 交易单',
+'margin-app': '借贷 App 交易单',
+'fl-sys': '借贷强制平仓单（爆仓单）'
+}
+
+
+
+
 ACCESS_KEY = ""
 SECRET_KEY = ""
 PRIVATE_KEY = ""

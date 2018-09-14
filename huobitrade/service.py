@@ -22,7 +22,7 @@ logger.debug(f'<TESTING>LOG_TESTING')
 
 
 class HBWebsocket:
-    def __init__(self, addr='wss://api.huobi.br.com/ws', reconn=10,
+    def __init__(self, addr='api.huobi.br.com', reconn=10,
                  interval=3):
         """
         火币websocket封装类
@@ -30,7 +30,8 @@ class HBWebsocket:
         :param reconn: 断线重连次数, 设为-1为一直重连
         :param interval: 断线后重连间歇，默认3秒
         """
-        self._addr = addr
+        self._ws_addr = f'wss://{addr}/ws'
+        self._addr = addr.lower()
         self.sub_dict = {}  # 订阅列表
         self.__handlers = []  # 对message做处理的处理函数或处理类
         self.__req_callbacks = {}
@@ -49,11 +50,11 @@ class HBWebsocket:
     def on_message(self, ws, _msg):  # 接收ws的消息推送并处理，包括了pingpong，处理订阅列表，以及处理数据推送
         json_data = gz.decompress(_msg).decode()
         msg = json.loads(json_data)
+        logger.debug(f'{msg}')
         if 'ping' in msg:
             pong = {'pong': msg['ping']}
             self.send_message(pong)
         elif 'status' in msg:
-            logger.debug(f'{msg}')
             if msg['status'] == 'ok':
                 if 'subbed' in msg:
                     self.sub_dict.update({
@@ -86,18 +87,48 @@ class HBWebsocket:
                 logger.error(
                     f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
                 )
+        elif 'op' in msg:
+            op = msg['op']
+            if op == 'ping':
+                pong = {'op': 'pong', 'ts': msg['ts']}
+                self.send_message(pong)
+            if msg.setdefault('err-code', 0) == 0:
+                if op == 'sub':
+                    logger.info(
+                        f'<订阅>Topic:{msg["topic"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+                elif op == 'unsub':
+                    logger.info(
+                        f'<订阅>Topic:{msg["topic"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+                elif op == 'req':
+                    logger.info(f'<请求>Topic:{msg["topic"]}请求数据成功 #{msg["cid"]}#')
+                    OnRsp = self.__req_callbacks.get(msg['topic'], [])
+                    def callbackThread(_m):
+                        for cb in OnRsp:
+                            try:
+                                cb(_m)
+                            except Exception as e:
+                                logger.error(f'<请求回调>{msg["topic"]}的回调函数{cb.__name__}异常-{e}')
+                    _t = Thread(target=callbackThread, args=(msg, ))
+                    _t.setDaemon(True)
+                    _t.start()
+                elif op == 'notify':
+                    self.pub_msg(msg)
+            else:
+                logger.error(
+                    f'<错误>{msg.get("cid")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
+                )
         else:
-            logger.debug(f'{msg}')
             self.pub_msg(msg)
 
     def pub_msg(self, msg):
         """核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列"""
-        if 'ch' in msg:
+        if 'ch' in msg or 'op' in msg:
+            topic = msg.get('ch') or msg.get('topic')
             self.pub_socket.send_multipart(
-                [pickle.dumps(msg['ch']), pickle.dumps(msg)])
+                [pickle.dumps(topic), pickle.dumps(msg)])
 
-        if 'ch' in msg or 'rep' in msg:
-            topic = msg.get('ch') or msg.get('rep')
+        if 'ch' in msg or 'op' in msg:
+            topic = msg.get('ch') or msg.get('topic')
             for h in self.__handle_funcs.get(topic, []):
                 h(msg)
 
@@ -105,8 +136,10 @@ class HBWebsocket:
         logger.error(f'<错误>on_error:{error}')
 
     def on_close(self, ws):
-        self._active = False
         logger.info(f'<连接>已断开与{self._addr}的连接')
+        if not self._active:
+            return
+
         if self._reconn > 0:
             logger.info(f'<连接>尝试与{self._addr}进行重连')
             self.__start()
@@ -126,6 +159,7 @@ class HBWebsocket:
         else:
             logger.info(f'<订阅>初始化订阅完成')
 
+    # ------------------- 注册req回调处理函数 -------------------------------
     def register_onRsp(self, req):
         """
         添加回调处理函数的装饰器
@@ -139,7 +173,9 @@ class HBWebsocket:
 
     def unregister_onRsp(self, req):
         return self.__req_callbacks.pop(req)
+    # ------------------------------------------------------------------
 
+    # ------------------------- 注册handler -----------------------------
     def register_handler(self, handler):  # 注册handler
         if handler not in self.__handlers:
             self.__handlers.append(handler)
@@ -149,7 +185,9 @@ class HBWebsocket:
         if handler in self.__handlers:
             self.__handlers.remove(handler)
             handler.stop()
+    # -----------------------------------------------------------------
 
+    # --------------------- 注册handle_func --------------------------
     def register_handle_func(self, topic):  # 注册handle_func
         def _wrapper(_handle_func):
             if topic not in self.__handle_funcs:
@@ -169,6 +207,9 @@ class HBWebsocket:
         if self.__handle_funcs.get(topic) == []:
             self.__handle_funcs.pop(topic)
 
+    # -----------------------------------------------------------------
+
+    # --------------------- handle属性 --------------------------------
     @property
     def handlers(self):
         return self.__handlers
@@ -180,6 +221,7 @@ class HBWebsocket:
     @property
     def OnRsp_callbacks(self):
         return self.__req_callbacks
+    # -----------------------------------------------------------------
 
     @staticmethod
     def _check_info(**kwargs):
@@ -197,6 +239,7 @@ class HBWebsocket:
         else:
             return True
 
+    # ----------------------行情订阅函数---------------------------------------
     def sub_overview(self, _id=''):
         msg = {'sub': 'market.overview', 'id': _id}
         self.send_message(msg)
@@ -256,7 +299,9 @@ class HBWebsocket:
         msg = {'unsub': f'market.tickers', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送取消订阅请求 #{_id}#')
+    # -------------------------------------------------------------------------
 
+    # -------------------------行情请求函数----------------------------------------
     def req_kline(self, symbol, period, _id='', **kwargs):
         if self._check_info(symbol=symbol, period=period):
             msg = {'req': f'market.{symbol}.kline.{period}', 'id': _id}
@@ -287,13 +332,110 @@ class HBWebsocket:
         self.send_message(msg)
         logger.info(f'<请求>symbol-发送请求*{symbol}* #{_id}#')
 
+    # -------------------------------------------------------------------------
+
+    # ----------------------帐户订阅函数--------------------------------------
+    def auth(self, cid:str =''):  # todo:鉴权未成功
+        from .utils import ACCESS_KEY, SECRET_KEY, createSign
+        timestamp = dt.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
+        params = {
+          "AccessKeyId": ACCESS_KEY,
+          "SignatureMethod": "HmacSHA256",
+          "SignatureVersion": "2",
+          "Timestamp": timestamp,}
+
+        signature = createSign(params, 'GET', self._addr, '/ws', SECRET_KEY)
+        params['Signature'] = signature
+        params['op'] = 'auth'
+        params['cid'] = cid
+        self.send_message(params)
+
+    def sub_accounts(self, cid:str=''):
+        msg = {'op': 'sub', 'cid': cid, 'topic': 'accounts'}
+        self.send_message(msg)
+        logger.info(f'<订阅>accouts-发送订阅请求 #{cid}#')
+
+    def unsub_accounts(self, cid:str=''):
+        msg = {'op': 'unsub', 'cid': cid, 'topic': 'accounts'}
+        self.send_message(msg)
+        logger.info(f'<订阅>accouts-发送订阅取消请求 #{cid}#')
+
+    def sub_orders(self, symbol='*', cid:str=''):
+        """
+
+        :param symbol: '*'为订阅所有订单变化
+        :param cid:
+        :return:
+        """
+        msg = {'op': 'sub', 'cid': cid, 'topic': f'orders.{symbol}'}
+        self.send_message(msg)
+        logger.info(f'<订阅>orders-发送订阅请求*{symbol}* #{cid}#')
+
+    def unsub_orders(self, symbol='*', cid:str=''):
+        """
+
+        :param symbol: '*'为订阅所有订单变化
+        :param cid:
+        :return:
+        """
+        msg = {'op': 'unsub', 'cid': cid, 'topic': f'orders.{symbol}'}
+        self.send_message(msg)
+        logger.info(f'<订阅>orders-发送取消订阅请求*{symbol}* #{cid}#')
+
+    # ------------------------------------------------------------------------
+    # ----------------------帐户请求函数--------------------------------------
+    def req_accounts(self, cid:str=''):
+        msg = {'op': 'req', 'cid': cid, 'topic': 'accounts.list'}
+        self.send_message(msg)
+        logger.info(f'<请求>accounts-发送请求 #{cid}#')
+
+    def req_orders(self, acc_id, symbol, states:list,
+                   types:list=None,
+                   start_date=None, end_date=None,
+                   _from=None, direct=None,
+                   size=None, cid:str=''):
+        states = ','.join(states)
+        msg = {'op': 'req', 'account-id': acc_id, 'symbol': symbol, 'states': states, 'cid': cid,
+               'topic': 'orders.list'}
+        if types:
+            types = ','.join(types)
+            msg['types'] = types
+
+        if start_date:
+            start_date = parser.parse(start_date).strftime('%Y-%m-%d')
+            msg['start-date'] = start_date
+
+        if end_date:
+            end_date = parser.parse(end_date).strftime('%Y-%m-%d')
+            msg['end-date'] = end_date
+
+        if _from:
+            msg['_from'] = _from
+
+        if direct:
+            msg['direct'] = direct
+
+        if size:
+            msg['size'] = size
+
+        self.send_message(msg)
+        logger.info(f'<请求>orders-发送请求 #{cid}#')
+
+    def req_order_details(self, order_id, cid:str=''):
+        msg = {'op': 'req', 'order-id': order_id, 'cid': cid, 'topic': 'orders.detail'}
+        self.send_message(msg)
+        logger.info(f'<请求>accounts-发送请求 #{cid}#')
+    # ------------------------------------------------------------------------
+
+
+    # -------------------------开关ws-----------------------------------------
     def run(self):
         if not hasattr(self, 'ws_thread') or not self.ws_thread.is_alive():
             self.__start()
 
     def __start(self):
         self.ws = ws.WebSocketApp(
-            self._addr,
+            self._ws_addr,
             on_open=self.on_open,
             on_message=self.on_message,
             on_error=self.on_error,
@@ -305,8 +447,10 @@ class HBWebsocket:
 
     def stop(self):
         if hasattr(self, 'ws_thread') and self.ws_thread.is_alive():
+            self._active = False
             self.ws.close()
-            self.ws_thread.join()
+            # self.ws_thread.join()
+    # ------------------------------------------------------------------------
 
 
 class HBRestAPI(metaclass=Singleton):
