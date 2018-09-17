@@ -22,24 +22,32 @@ logger.debug(f'<TESTING>LOG_TESTING')
 
 
 class HBWebsocket:
-    def __init__(self, addr='api.huobi.br.com', reconn=10,
-                 interval=3):
+    def __init__(self, host='api.huobi.br.com', auth=False,
+                 reconn=10, interval=3):
         """
         火币websocket封装类
-        :param addr: ws地址
+        :param host: ws地址
+        :param auth: 是否为鉴权ws
         :param reconn: 断线重连次数, 设为-1为一直重连
         :param interval: 断线后重连间歇，默认3秒
         """
-        self._ws_addr = f'wss://{addr}/ws'
-        self._addr = addr.lower()
+        from .utils import ACCESS_KEY, SECRET_KEY
+        if auth and not (ACCESS_KEY and SECRET_KEY):
+            raise Exception('ACCESS_KEY或SECRET_KEY未设置！')
+        self._protocol = 'wss://'
+        self._host = host
+        self._path = '/ws/v1' if auth else '/ws'
+        self.addr = self._protocol + self._host + self._path
         self.sub_dict = {}  # 订阅列表
         self.__handlers = []  # 对message做处理的处理函数或处理类
         self.__req_callbacks = {}
         self.__handle_funcs = {}
+        self.__open_callbacks = []
         self.ctx = zmq_ctx
         self.pub_socket = self.ctx.socket(zmq.PUB)
         self.pub_socket.bind('inproc://HBWS')
         self._active = False
+        self._auth = auth
         self._reconn = reconn
         self._interval = interval
 
@@ -87,38 +95,50 @@ class HBWebsocket:
                 logger.error(
                     f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
                 )
-        elif 'op' in msg:
-            op = msg['op']
-            if op == 'ping':
-                pong = {'op': 'pong', 'ts': msg['ts']}
-                self.send_message(pong)
-            if msg.setdefault('err-code', 0) == 0:
-                if op == 'sub':
-                    logger.info(
-                        f'<订阅>Topic:{msg["topic"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
-                elif op == 'unsub':
-                    logger.info(
-                        f'<订阅>Topic:{msg["topic"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
-                elif op == 'req':
-                    logger.info(f'<请求>Topic:{msg["topic"]}请求数据成功 #{msg["cid"]}#')
-                    OnRsp = self.__req_callbacks.get(msg['topic'], [])
-                    def callbackThread(_m):
-                        for cb in OnRsp:
-                            try:
-                                cb(_m)
-                            except Exception as e:
-                                logger.error(f'<请求回调>{msg["topic"]}的回调函数{cb.__name__}异常-{e}')
-                    _t = Thread(target=callbackThread, args=(msg, ))
-                    _t.setDaemon(True)
-                    _t.start()
-                elif op == 'notify':
-                    self.pub_msg(msg)
-            else:
-                logger.error(
-                    f'<错误>{msg.get("cid")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
-                )
         else:
             self.pub_msg(msg)
+
+    def on_auth_message(self, ws, _msg):  # 鉴权ws的消息处理
+        json_data = gz.decompress(_msg).decode()
+        msg = json.loads(json_data)
+        logger.debug(f'{msg}')
+        op = msg['op']
+        if op == 'ping':
+            pong = {'op': 'pong', 'ts': msg['ts']}
+            self.send_message(pong)
+        if msg.setdefault('err-code', 0) == 0:
+            if op == 'notify':
+                self.pub_msg(msg)
+            elif op == 'sub':
+                logger.info(
+                    f'<订阅>Topic:{msg["topic"]}订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+            elif op == 'unsub':
+                logger.info(
+                    f'<订阅>Topic:{msg["topic"]}取消订阅成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+            elif op == 'req':
+                logger.info(f'<请求>Topic:{msg["topic"]}请求数据成功 #{msg["cid"]}#')
+                OnRsp = self.__req_callbacks.get(msg['topic'], [])
+
+                def callbackThread(_m):
+                    for cb in OnRsp:
+                        try:
+                            cb(_m)
+                        except Exception as e:
+                            logger.error(f'<请求回调>{msg["topic"]}的回调函数{cb.__name__}异常-{e}')
+
+                _t = Thread(target=callbackThread, args=(msg,))
+                _t.setDaemon(True)
+                _t.start()
+            elif op == 'auth':
+                logger.info(
+                    f'<鉴权>鉴权成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+                for cb in self.__open_callbacks:
+                    cb()
+
+        else:
+            logger.error(
+                f'<错误>{msg.get("cid")}-OP:{op} ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
+            )
 
     def pub_msg(self, msg):
         """核心的处理函数，如果是handle_func直接处理，如果是handler，推送到handler的队列"""
@@ -136,30 +156,39 @@ class HBWebsocket:
         logger.error(f'<错误>on_error:{error}')
 
     def on_close(self, ws):
-        logger.info(f'<连接>已断开与{self._addr}的连接')
+        logger.info(f'<连接>已断开与{self.addr}的连接')
         if not self._active:
             return
 
         if self._reconn > 0:
-            logger.info(f'<连接>尝试与{self._addr}进行重连')
+            logger.info(f'<连接>尝试与{self.addr}进行重连')
             self.__start()
             self._reconn -= 1
             time.sleep(self._interval)
         else:
-            logger.info(f'<连接>尝试与{self._addr}进行重连')
+            logger.info(f'<连接>尝试与{self.addr}进行重连')
             self.__start()
             time.sleep(self._interval)
 
     def on_open(self, ws):
         self._active = True
-        logger.info(f'<连接>建立与{self._addr}的连接')
+        logger.info(f'<连接>建立与{self.addr}的连接')
         for topic, subbed in self.sub_dict.items():
             msg = {'sub': subbed['topic'], 'id': subbed['id']}
             self.send_message(msg)
         else:
             logger.info(f'<订阅>初始化订阅完成')
 
-    # ------------------- 注册req回调处理函数 -------------------------------
+        for fun in self.__open_callbacks:
+            fun()
+
+    def on_auth_open(self, ws):
+        self._active = True
+        logger.info(f'<连接>建立与{self.addr}的连接')
+        self.auth()
+        logger.info(f'<鉴权>发起鉴权请求')
+
+    # ------------------- 注册回调处理函数 -------------------------------
     def register_onRsp(self, req):
         """
         添加回调处理函数的装饰器
@@ -169,10 +198,23 @@ class HBWebsocket:
         def wrapper(_callback):
             callbackList = self.__req_callbacks.setdefault(req, [])
             callbackList.append(_callback)
+            return _callback
         return wrapper
 
     def unregister_onRsp(self, req):
         return self.__req_callbacks.pop(req)
+
+    def after_open(self,_func):  # ws开启之后需要完成的初始化处理
+        @wraps(_func)
+        def _callback():
+            try:
+                _func()
+            except Exception as e:
+                logger.exception(f'afer_open回调处理错误{e}')
+        self.__open_callbacks.append(_callback)
+
+        return _callback
+
     # ------------------------------------------------------------------
 
     # ------------------------- 注册handler -----------------------------
@@ -335,7 +377,7 @@ class HBWebsocket:
     # -------------------------------------------------------------------------
 
     # ----------------------帐户订阅函数--------------------------------------
-    def auth(self, cid:str =''):  # todo:鉴权未成功
+    def auth(self, cid:str =''):
         from .utils import ACCESS_KEY, SECRET_KEY, createSign
         timestamp = dt.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S')
         params = {
@@ -344,7 +386,7 @@ class HBWebsocket:
           "SignatureVersion": "2",
           "Timestamp": timestamp,}
 
-        signature = createSign(params, 'GET', self._addr, '/ws', SECRET_KEY)
+        signature = createSign(params, 'GET', self._host, self._path, SECRET_KEY)
         params['Signature'] = signature
         params['op'] = 'auth'
         params['cid'] = cid
@@ -421,7 +463,7 @@ class HBWebsocket:
         self.send_message(msg)
         logger.info(f'<请求>orders-发送请求 #{cid}#')
 
-    def req_order_details(self, order_id, cid:str=''):
+    def req_orders_detail(self, order_id, cid:str=''):
         msg = {'op': 'req', 'order-id': order_id, 'cid': cid, 'topic': 'orders.detail'}
         self.send_message(msg)
         logger.info(f'<请求>accounts-发送请求 #{cid}#')
@@ -435,14 +477,14 @@ class HBWebsocket:
 
     def __start(self):
         self.ws = ws.WebSocketApp(
-            self._ws_addr,
-            on_open=self.on_open,
-            on_message=self.on_message,
+            self.addr,
+            on_open=self.on_open if not self._auth else self.on_auth_open,
+            on_message=self.on_message if not self._auth else self.on_auth_message,
             on_error=self.on_error,
             on_close=self.on_close,
             # on_data=self.on_data
         )
-        self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS')
+        self.ws_thread = Thread(target=self.ws.run_forever, name='HuoBi_WS' if not self._auth else 'HuoBi_Auth_WS')
         self.ws_thread.start()
 
     def stop(self):

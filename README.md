@@ -1,6 +1,7 @@
 # [火币API的Python版](https://hadrianl.github.io/huobi/)
 - websocket封装成`HBWebsocket`类，用`run`开启连接线程
 - `HBWebsocket`通过注册`Handler`的方式来处理数据，消息通过`pub_msg`来分发到个各`topic`下的`Handler`线程来处理
+- 火币的鉴权WS是与普通WS独立的，所以同时使用需要开启两个WS
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
 - 兼容win，mac，linux，python版本必须3.6或以上，因为使用了大量的f***
 - 目前已经稳定使用，后续会基于框架提供如行情持久化，交易数据持久化等`handler`
@@ -14,8 +15,9 @@
 - 深度数据则命名为depth
 
 ## Lastest
-- 增加了母子账户的api（`transfer`，`get_aggregate_balance`， `get_sub_balance`）
-- 把private key修改回来，火币暂停推ecdsa加密方案，`setKey`时候让private_key默认为None就好了
+- 增加了鉴权WS，目前鉴权WS与普通行情WS是融合在同一模块的，通过auth参数来决定启用哪种WS
+- WS中的addr参数为了配合现在的鉴权WS，变成了host参数，之前需要用`addr=wss://api.huobi.br.com/ws`的,现在用`host=api.huobi.br.com`
+- 新增了WS接口的after_open装饰器,用于回调WS连接成功后的函数（普通WS是在连接后，鉴权WS是在连接并鉴权成功后）
 
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -26,15 +28,14 @@
 - [HuoBi Trading](#火币api的python版)
     - [1. Installation](#1-installation)
     - [2. Usage](#2-usage)
-        - [2.1 WebSocket API](#21-websocket-api)
+        - [2.1.1 WebSocket API](#211-websocket-api)
+        - [2.1.2 Auth WebSocket API](#212-auth-websocket-api)
         - [2.2 Restful API](#22-restful-api)
         - [2.3 Restful API-Decoration    （Experimental）](#23-restful-api-decorationexperimental)
         - [2.4 Message Handler](#24-message-handler)
         - [2.5 Latest Message Handler](#25-latest-message-handler)
         - [2.6 HBData](#26-hbdata)
     - [3. Extra](#3-extra)
-
-
 
 
 ## 1. Installation
@@ -66,11 +67,15 @@ pip install huobitrade
     1. 基于`flask`写的一个用于查询当日成交明细和成交分布图，很丑很简陋
     2. 有兴趣的小伙伴可以联系我
 
-### 2.1 WebSocket API
+### 2.1.1 WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
 
-hb = HBWebsocket()  # 可以填入url参数，默认是https://api.huobi.br.com
+hb = HBWebsocket()  # 可以填入url参数，默认是api.huobi.br.com
+@hb.after_open  # 使用装饰器注册函数，当ws连接之后会调用函数，可以实现订阅之类的
+def sub_depth():
+    hb.sub_depth('ethbtc')
+
 hb.run()  # 开启websocket进程
 
 # --------------------------------------------
@@ -92,6 +97,24 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 
 ```
 
+### 2.1.2 Auth WebSocket API
+```python
+from huobitrade.service import HBWebsocket
+setKey('your acess_key', 'you secret_key')
+hb = HBWebsocket(auth=True)  # 可以填入url参数，默认是api.huobi.br.com
+@hb.after_open  # 会再鉴权成功通过之后自动调用
+def sub_accounts():
+    hb.sub_accounts()
+
+hb.run()  # 开启websocket进程
+
+@hb.register_handle_func('accounts')  # 注册一个处理函数，最好的处理方法应该是实现一个handler
+def auth_handle(msg):
+    print('auth_handle:', msg)
+
+```
+
+
 ### 2.2 Restful API
 - restapi需要先用`setKey`设置密钥
 - 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要用`from huobitrade import setUrl`设置url
@@ -99,9 +122,8 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 ```python
 from huobitrade.service import HBRestAPI
 from huobitrade import setKey
-private_key = open('privatekey.pem').read()
-
-setKey('your acess_key', 'you secret_key', private_key)  # setKey很重要，最好在引入其他模块之前先setKey，部分模块要基于密钥,private_key可以用上面两种其中一种
+# setUrl('', '')
+setKey('your acess_key', 'you secret_key')  # setKey很重要，最好在引入其他模块之前先setKey，鉴权ws和restapi的部分函数是基于密钥
 api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用.也可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
 
