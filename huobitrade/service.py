@@ -55,7 +55,7 @@ class HBWebsocket:
         msg_json = json.dumps(msg).encode()
         self.ws.send(msg_json)
 
-    def on_message(self, ws, _msg):  # 接收ws的消息推送并处理，包括了pingpong，处理订阅列表，以及处理数据推送
+    def on_message(self, _msg):  # 接收ws的消息推送并处理，包括了pingpong，处理订阅列表，以及处理数据推送
         json_data = gz.decompress(_msg).decode()
         msg = json.loads(json_data)
         logger.debug(f'{msg}')
@@ -98,7 +98,7 @@ class HBWebsocket:
         else:
             self.pub_msg(msg)
 
-    def on_auth_message(self, ws, _msg):  # 鉴权ws的消息处理
+    def on_auth_message(self, _msg):  # 鉴权ws的消息处理
         json_data = gz.decompress(_msg).decode()
         msg = json.loads(json_data)
         logger.debug(f'{msg}')
@@ -152,10 +152,10 @@ class HBWebsocket:
             for h in self.__handle_funcs.get(topic, []):
                 h(msg)
 
-    def on_error(self, ws, error):
+    def on_error(self, error):
         logger.error(f'<错误>on_error:{error}')
 
-    def on_close(self, ws):
+    def on_close(self):
         logger.info(f'<连接>已断开与{self.addr}的连接')
         if not self._active:
             return
@@ -170,7 +170,7 @@ class HBWebsocket:
             self.__start()
             time.sleep(self._interval)
 
-    def on_open(self, ws):
+    def on_open(self):
         self._active = True
         logger.info(f'<连接>建立与{self.addr}的连接')
         for topic, subbed in self.sub_dict.items():
@@ -182,7 +182,7 @@ class HBWebsocket:
         for fun in self.__open_callbacks:
             fun()
 
-    def on_auth_open(self, ws):
+    def on_auth_open(self):
         self._active = True
         logger.info(f'<连接>建立与{self.addr}的连接')
         self.auth()

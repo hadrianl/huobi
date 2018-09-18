@@ -10,7 +10,7 @@ from setuptools import setup, find_packages
 with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()
 
-requires = ['websocket-client',
+requires = ['websocket-client>=0.53',
             'requests',
             'pymongo',
             'pyzmq',
@@ -21,7 +21,7 @@ requires = ['websocket-client',
 hb_packages = ['huobitrade', 'huobitrade/extra']
 
 setup(name='huobitrade',
-      version='0.4.4',
+      version='0.4.5',
       description='huobi_api for python',
       long_description=long_description,
       long_description_content_type="text/markdown",

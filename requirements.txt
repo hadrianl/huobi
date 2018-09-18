@@ -1,5 +1,5 @@
 pymongo
-websocket-client
+websocket-client>=0.53
 requests
 python-dateutil
 pandas
