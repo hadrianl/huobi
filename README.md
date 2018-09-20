@@ -10,15 +10,16 @@
 
 ## Notice
 - 该封装的函数命名跟火币本身的请求命名表达不太一致
-- 包含open, close, high, low的数据命名是kline或ohlc（其中部分有ask和bid，都纳入这类命名）
+- 包含open, close, high, low的数据命名是kline（其中部分有ask和bid，都纳入这类命名）
 - 当且仅当数据只有一条逐笔tick（没有ohlc），命名是ticker
 - 深度数据则命名为depth
 
 ## Lastest
-- 增加了鉴权WS，目前鉴权WS与普通行情WS是融合在同一模块的，通过auth参数来决定启用哪种WS
 - WS中的addr参数为了配合现在的鉴权WS，变成了host参数，之前需要用`addr=wss://api.huobi.br.com/ws`的,现在用`host=api.huobi.br.com`
-- 新增了WS接口的after_open装饰器,用于回调WS连接成功后的函数（普通WS是在连接后，鉴权WS是在连接并鉴权成功后）
-
+- 新增了WS接口的after_open装饰器（鉴权ws是after_auth）,用于回调WS连接成功后的函数
+- 修改了部分命名
+- 目前鉴权WS与普通行情WS已经分开两模块，通过统一工厂函数HBWebsocket调用(auth参数)
+- 新增同一个handler被注册进多个ws的支持，解决开多个ws的冲突问题
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
@@ -214,12 +215,12 @@ data.omgeth.depth
 data.omgeth.ticker
 　# <<class 'huobitrade.datatype.HBTicker'> for omgeth>
 data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为2000
-data.omgeth.kline.latest
+data.omgeth.kline.last
 data.omgeth.kline.last_24_hour
 data.omgeth.depth.step0  # step0,1,2,3,4,5
-data.omgeth.ticker.latest  # 最新的一条tick
+data.omgeth.ticker.last  # 最新的一条tick
 data.omgeth.ticker.last_20  # last_1至last_2000
-data.all_24h_ohlc  # 当前所有交易对的ticker
+data.all_24h_kline  # 当前所有交易对的ticker
 account.Detail  # 所有账户明细
 account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余
 account.Pro_XXXXX_balance.update()  # 更新账户结余信息

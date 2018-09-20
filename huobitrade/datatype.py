@@ -28,12 +28,12 @@ class HBKline:
                 reply = _api.get_kline(self.__symbol, args[0], int(args[1]))
                 klines = pd.DataFrame(reply['data'])
                 return klines
-        elif item == 'latest':
-            reply = _api.get_latest_1m_ohlc(self.__symbol)
-            latest_kline = pd.Series(reply['tick'])
-            return latest_kline
+        elif item == 'last':
+            reply = _api.get_last_1m_kline(self.__symbol)
+            last_kline = pd.Series(reply['tick'])
+            return last_kline
         elif item == 'last_24_hour':
-            reply = _api.get_lastest_24H_detail(self.__symbol)
+            reply = _api.get_last_24h_kline(self.__symbol)
             last_24h = pd.Series(reply['tick'])
             return last_24h
         else:
@@ -53,7 +53,7 @@ class HBDepth:
     def __getattr__(self, item):
         global _api
         if item in (d for d in DEPTH.values()):
-            reply = _api.get_latest_depth(self.__symbol, item)
+            reply = _api.get_last_depth(self.__symbol, item)
             bids, asks = reply['tick']['bids'], reply['tick']['asks']
             df_bids = pd.DataFrame(bids, columns=['bid', 'bid_qty'])
             df_asks = pd.DataFrame(asks, columns=['ask', 'ask_qty'])
@@ -75,10 +75,10 @@ class HBTicker:
 
     def __getattr__(self, item):
         global _api
-        if item == 'latest':
-            reply = _api.get_latest_ticker(self.__symbol)
-            latest_ticker = pd.DataFrame(reply['tick']['data'])
-            return latest_ticker
+        if item == 'last':
+            reply = _api.get_last_ticker(self.__symbol)
+            last_ticker = pd.DataFrame(reply['tick']['data'])
+            return last_ticker
         elif 'last' in item:
             args = item.split('_')
             size = int(args[1])
@@ -145,8 +145,8 @@ class HBMarket:
 
     def __getattr__(self, item):
         global _api
-        if item == 'all_24h_ohlc':
-            return _api.get_all_lastest_24h_ohlc()
+        if item == 'all_24h_kline':
+            return _api.get_all_last_24h_kline()
 
 
 class HBOrder:

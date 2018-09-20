@@ -5,21 +5,45 @@
 # @File    : example.py
 # @Contact   : 137150224@qq.com
 from huobitrade.service import HBWebsocket, HBRestAPI
-from huobitrade.handler import DBHandler
+from huobitrade.handler import BaseHandler
 from huobitrade import setKey, logger
+from functools import partial
 import time
-logger.setLevel('DEBUG')
+# logger.setLevel('DEBUG')
 # setKey('access_key', 'secret_key')
 
+class MyHandler(BaseHandler):
+    def __init__(self, topic, *args, **kwargs):
+        BaseHandler.__init__(self, 'just Thread name', topic)
+
+    def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
+        print(topic)
+
+setKey("30f89342-59abffed-6b3d5a9d-1eada", "b3f65271-35884462-5141babd-aef6e")
+auhb = HBWebsocket(auth=True)
 hb = HBWebsocket()
+hb2 = HBWebsocket()
+auhb.after_auth(auhb.sub_accounts)
+hb.after_open(partial(hb.sub_kline, 'dcreth', '1min'))
+hb2.after_open(partial(hb2.sub_depth, 'dcreth'))
+handler = MyHandler(None)
+auhb.register_handler(handler)
+hb.register_handler(handler)
+hb2.register_handler(handler)
+auhb.run()
 hb.run()
-time.sleep(1)  # run之后连接需要一丢丢时间，sleep一下再订阅
-hb.sub_kline('ethbtc', '1min')
-hb.req_kline('ethbtc', '1min')
+hb2.run()
+
+
+time.sleep(30)
+hb2.unregister_handler(handler)
+
+# hb.sub_kline('ethbtc', '1min')
+# hb.req_kline('ethbtc', '1min')
 # handler = DBHandler()
 # hb.register_handler(handler)
 
-# @hb.register_handle_func('market.ethbtc.kline.1min')
+# @hb.register_handle_func('market.dcreth.kline.1min')
 # def handle(msg):
 #     print('handle:', msg)
 

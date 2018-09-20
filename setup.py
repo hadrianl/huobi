@@ -21,8 +21,8 @@ requires = ['websocket-client>=0.53',
 hb_packages = ['huobitrade', 'huobitrade/extra']
 
 setup(name='huobitrade',
-      version='0.4.5',
-      description='huobi_api for python',
+      version='0.4.6',
+      description='HuoBi Trading Framwork(python)',
       long_description=long_description,
       long_description_content_type="text/markdown",
       author='Hadrianl',

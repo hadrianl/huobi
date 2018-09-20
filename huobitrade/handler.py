@@ -22,6 +22,7 @@ class BaseHandler:
         self.ctx = zmq_ctx
         self.sub_socket = self.ctx.socket(zmq.SUB)
         self.sub_socket.setsockopt(zmq.RCVTIMEO, 3000)
+        self.inproc = set()
 
         if self.topic:  # 如果topic默认为None，则对所有的topic做处理
             for t in self.topic:
@@ -38,7 +39,6 @@ class BaseHandler:
         self.__active = False
 
     def run(self):
-        self.sub_socket.connect('inproc://HBWS')
         while self.__active:
             try:
                 topic_, msg_ = self.sub_socket.recv_multipart()
@@ -56,7 +56,6 @@ class BaseHandler:
                 ...
             except Exception as e:
                 logger.exception(f'<Handler>-{self.name} exception:{e}')
-        self.sub_socket.disconnect('inproc://HBWS')
 
     def add_topic(self, new_topic):
         self.sub_socket.setsockopt(zmq.SUBSCRIBE, pickle.dumps(new_topic))
@@ -66,15 +65,23 @@ class BaseHandler:
         self.sub_socket.setsockopt(zmq.UNSUBSCRIBE, pickle.dumps(topic))
         self.topic.remove(topic)
 
-    def stop(self):
-        self.__active = False
-        self.thread.join()
+    def stop(self, wsname):
+        try:
+            self.inproc.remove(wsname)
+            self.sub_socket.disconnect(f'inproc://{wsname}')
+        finally:
+            if not self.inproc:
+                self.__active = False
+                self.thread.join()
 
-    def start(self):
-        self.__active = True
-        self.thread = Thread(target=self.run, name=self.name)
-        self.thread.setDaemon(True)
-        self.thread.start()
+    def start(self, wsname):
+        self.sub_socket.connect(f'inproc://{wsname}')
+        self.inproc.add(wsname)
+        if not self.__active:
+            self.__active = True
+            self.thread = Thread(target=self.run, name=self.name)
+            self.thread.setDaemon(True)
+            self.thread.start()
 
     @abstractmethod
     def handle(self, topic, msg):  # 所有handler需要重写这个函数
