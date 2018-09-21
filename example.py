@@ -10,7 +10,7 @@ from huobitrade import setKey, logger
 from functools import partial
 import time
 # logger.setLevel('DEBUG')
-# setKey('access_key', 'secret_key')
+setKey('access_key', 'secret_key')
 
 class MyHandler(BaseHandler):
     def __init__(self, topic, *args, **kwargs):
@@ -19,7 +19,6 @@ class MyHandler(BaseHandler):
     def handle(self, topic, msg):  # 实现handle来处理websocket推送的msg
         print(topic)
 
-setKey("30f89342-59abffed-6b3d5a9d-1eada", "b3f65271-35884462-5141babd-aef6e")
 auhb = HBWebsocket(auth=True)
 hb = HBWebsocket()
 hb2 = HBWebsocket()
@@ -37,6 +36,9 @@ hb2.run()
 
 time.sleep(30)
 hb2.unregister_handler(handler)
+hb.stop()
+hb2.stop()
+auhb.stop()
 
 # hb.sub_kline('ethbtc', '1min')
 # hb.req_kline('ethbtc', '1min')

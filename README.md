@@ -22,6 +22,10 @@
 - 新增同一个handler被注册进多个ws的支持，解决开多个ws的冲突问题
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
+[![GitHub forks](https://img.shields.io/github/forks/hadrianl/huobi.svg)](https://github.com/hadrianl/huobi/network)
+
+[![GitHub stars](https://img.shields.io/github/stars/hadrianl/huobi.svg)](https://github.com/hadrianl/huobi/stargazers)
+
 ![build](https://travis-ci.org/hadrianl/huobi.svg?branch=master)
 ![license](https://img.shields.io/github/license/hadrianl/huobi.svg)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/huobitrade.svg)

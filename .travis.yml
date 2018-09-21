@@ -1,8 +1,20 @@
 language: python
 python:
   - "3.6"
+  - "3.7"
 install:
   - pip install -r requirements.txt
 
 script:
   - "python setup.py install"
+
+#deploy:
+#  provider: pypi
+#  user: Hadrianl     # pypi 用户名
+#  password:
+#    secure: "Your encrypted password"
+#  on:
+#    python: 3.6
+#    tags: true
+#    branch: master
+#  distributions: "sdist bdist_wheel"
