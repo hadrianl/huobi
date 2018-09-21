@@ -6,7 +6,7 @@
 # @Contact   : 137150224@qq.com
 
 from setuptools import setup, find_packages
-from huobitrade import __version__
+__version__ = "0.4.7"
 
 with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()

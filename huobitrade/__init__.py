@@ -7,5 +7,3 @@
 
 from .utils import setKey, setUrl, logger
 from .service import HBRestAPI, HBWebsocket, HBRestAPI_DEC
-
-__version__ = "0.4.7"
