@@ -105,7 +105,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 from huobitrade.service import HBWebsocket
 setKey('your acess_key', 'you secret_key')
 hb = HBWebsocket(auth=True)  # 可以填入url参数，默认是api.huobi.br.com
-@hb.after_open  # 会再鉴权成功通过之后自动调用
+@hb.after_auth  # 会再鉴权成功通过之后自动调用
 def sub_accounts():
     hb.sub_accounts()
 
