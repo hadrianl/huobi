@@ -4,12 +4,21 @@
 # @Author  : Hadrianl 
 # @File    : example.py
 # @Contact   : 137150224@qq.com
+
+"""
+该demo是用于模拟较为复杂的交易策略，
+同时用上了普通行情websocket，鉴权websocket与restfulapi，
+包括展示如何初始化订阅，以及如果注册handler等
+
+"""
+
+
 from huobitrade.service import HBWebsocket, HBRestAPI
 from huobitrade.handler import BaseHandler
 from huobitrade import setKey, logger
 from functools import partial
 import time
-# logger.setLevel('DEBUG')
+logger.setLevel('DEBUG')
 setKey('access_key', 'secret_key')
 
 class MyHandler(BaseHandler):

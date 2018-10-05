@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2018/9/25 0025 12:39
 # @Author  : Hadrianl 
-# @File    : authh_example.py
+# @File    : auth_test.py
 # @Contact   : 137150224@qq.com
+
+"""
+该例子仅限于用来测试鉴权接口是否能鉴权成功
+"""
 
 from huobitrade.service import HBWebsocket
 from huobitrade import setKey, logger
