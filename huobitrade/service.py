@@ -11,6 +11,7 @@ from .utils import logger, api_key_get, api_key_post, http_get_request, setUrl, 
 from dateutil import parser
 from functools import wraps
 from .core import _AuthWS, _HBWS
+import warnings
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -36,7 +37,10 @@ class HBRestAPI(metaclass=Singleton):
             setKey(*keys)
         if get_acc:
             try:
+                accounts = self.get_accounts()['data']
                 self.acc_id = self.get_accounts()['data'][0]['id']
+                if len(accounts) > 1:
+                    warnings.warn(f'存在多个账户id，默认设置acc_id为{self.acc_id}')
             except Exception as e:
                 raise Exception(f'Failed to get account: key may not be set ->{e}')
 
@@ -175,11 +179,12 @@ class HBRestAPI(metaclass=Singleton):
         params = {}
         return api_key_get(params, path, _async=_async)
 
-    def get_balance(self, acc_id, site='Pro', _async=False):
+    def get_balance(self, acc_id=None, site='Pro', _async=False):
         """
         获取当前账户资产
         :return:
         """
+        acc_id = self.acc_id if acc_id is None else acc_id
         assert site in ['Pro', 'HADAX']
         path = f'/v1{"/" if site == "Pro" else "/hadax/"}account/accounts/{acc_id}/balance'
         # params = {'account-id': self.acct_id}

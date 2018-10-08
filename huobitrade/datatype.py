@@ -257,7 +257,7 @@ class HBAccount:
             if int(args[1]) in self.Detail.index.tolist():
                 if args[2] == 'balance':
                     bal = HBBalance(args[1], args[0])
-                    setattr(self, item, bal)
+                    setattr(self.__class__, item, bal)
                     return bal
                 elif args[2] == 'order':
                     order = HBOrder(args[1], args[0])
@@ -297,6 +297,12 @@ class HBBalance:
             self.Detail = pd.DataFrame(data['list']).set_index('currency')
         else:
             raise Exception(f'get balance request failed--{ret}')
+
+    def __get__(self, instance, owner):
+        bal = instance.__dict__.setdefault('balance', {})
+        bal[self.acc_id] = self
+        self.update()
+        return self
 
     def __repr__(self):
         return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'

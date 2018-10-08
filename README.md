@@ -202,8 +202,9 @@ class MyLatestHandler(BaseHandler):
 
 ```python
 from huobitrade import setKey
-from huobitrade.datatype import HBMarket, HBAccount, HBMargin
 setKey('acess_key', 'secret_key')
+from huobitrade.datatype import HBMarket, HBAccount, HBMargin
+
 data = HBMarket()  # 行情接口类
 account = HBAccount()  # 交易接口类
 margin = HBMargin()  # 借贷接口类
@@ -224,8 +225,7 @@ data.omgeth.ticker.last  # 最新的一条tick
 data.omgeth.ticker.last_20  # last_1至last_2000
 data.all_24h_kline  # 当前所有交易对的ticker
 account.Detail  # 所有账户明细
-account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余
-account.Pro_XXXXX_balance.update()  # 更新账户结余信息
+account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余, 引用结余信息会自动更新
 account.Pro_XXXXX_order  # 某账户的订单类
 account.Pro_XXXXX_order['order_id']  # 查询某order明细,或者用get方法
 account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单

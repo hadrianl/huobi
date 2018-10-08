@@ -112,7 +112,7 @@ class TimeHandler:
         self.timer.start()
 
     @abstractmethod
-    def handle(self, topic, msg):
+    def handle(self, msg):
         ...
 
 

@@ -19,6 +19,7 @@ import zmq
 import pickle
 import time
 from abc import abstractmethod
+import uuid
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -27,6 +28,11 @@ class BaseWebsocket(object):
     ws_count = 0
     def __new__(cls, *args, **kwargs):
         cls.ws_count += 1
+        if cls is _AuthWS:
+            from .utils import ACCESS_KEY, SECRET_KEY
+            if not (ACCESS_KEY and SECRET_KEY):
+                raise Exception('ACCESS_KEY或SECRET_KEY未设置！')
+
         return object.__new__(cls)
 
     def send_message(self, msg):  # 发送消息
@@ -160,14 +166,12 @@ class BaseWebsocket(object):
 class _AuthWS(BaseWebsocket):
     def __init__(self, host='api.huobi.br.com',
                  reconn=10, interval=3):
-        from .utils import ACCESS_KEY, SECRET_KEY
-        if not (ACCESS_KEY and SECRET_KEY):
-            raise Exception('ACCESS_KEY或SECRET_KEY未设置！')
         self._protocol = 'wss://'
         self._host = host
         self._path = '/ws/v1'
         self.addr = self._protocol + self._host + self._path
-        self.name = f'HuoBiAuthWS{self.ws_count}'
+        # self.name = f'HuoBiAuthWS{self.ws_count}'
+        self.name = f'HuoBiAuthWS_{uuid.uuid1()}'
         self.sub_dict = {}  # 订阅列表
         self._handlers = []  # 对message做处理的处理函数或处理类
         self._req_callbacks = {}
@@ -347,7 +351,8 @@ class _HBWS(BaseWebsocket):
         self._host = host
         self._path = '/ws'
         self.addr = self._protocol + self._host + self._path
-        self.name = f'HuoBiWS{self.ws_count}'
+        # self.name = f'HuoBiWS{self.ws_count}'
+        self.name = f'HuoBiWS_{uuid.uuid1()}'
         self.sub_dict = {}  # 订阅列表
         self._handlers = []  # 对message做处理的处理函数或处理类
         self._req_callbacks = {}
