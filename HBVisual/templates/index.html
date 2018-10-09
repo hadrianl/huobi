@@ -86,7 +86,7 @@ overflow:scroll; //超过部分使用滚动条
                 <div class="form-group">
                     <input type="text" class="form-control" placeholder="bar counts" aria-describedby="btnGroupAddon" id="message" aria-label="Input group" value="200">
                     <label for="message">@</label>
-                      <input type="text" class="form-control" placeholder="code" aria-describedby="btnGroupAddon" id="code" aria-label="Input group" value="" readonly>
+                      <input type="text" class="form-control" placeholder="code" aria-describedby="btnGroupAddon" id="code" aria-label="Input group" value="dcreth" readonly>
                 </div>
 
                     </form>
@@ -104,7 +104,7 @@ overflow:scroll; //超过部分使用滚动条
     <span class="caret"></span> </button>
         <ul class="dropdown-menu" role="menu" aria-labelledby="dropdownMenu1" >
             <li role="presentation" v-for="c in codes">
-                <a role="menuitem" tabindex="-1" href="#" onclick="setCode($(this).text())">{[c]}</a>
+                <a role="menuitem" tabindex="-1" href="#c">{[c]}</a>
             </li>
          </ul>
     </div>
@@ -112,96 +112,66 @@ overflow:scroll; //超过部分使用滚动条
         <!--<h2 class="sub-header">回测数据</h2>-->
 
         <div class="table-responsive">
-            <table class="table table-striped" id="account">
+            <table class="table table-striped" id="accounts">
             <caption>账户信息</caption>
            <thead>
               <tr>
-                  <th>时间</th>
-                  <th>总市值</th>
-                  <th>保证金</th>
-                  <th>买入保证金</th>
-                  <th>卖出保证金</th>
-                  <th>当日总盈亏</th>
-                  <th>当日持仓盈亏</th>
-                  <th>当日平仓盈亏</th>
-                  <th>冻结现金</th>
-                  <th>现金</th>
-                  <th>市场价值</th>
-                  <th>手续费</th>
+                  <!--<th>时间</th>-->
+                  <th>账户ID</th>
+                  <th>币种</th>
+                  <th>账户类型</th>
+                  <th>账户余额</th>
               </tr>
            </thead>
            <tbody>
-                <tr>
-                    <td>{[account.datetime]}</td>
-                    <td>{[account.total_value]}</td>
-                    <td>{[account.margin]}</td>
-                    <td>{[account.buy_margin]}</td>
-                    <td>{[account.sell_margin]}</td>
-                    <td v-bind:style="{color:(account.daily_pnl >= 0?'red':'green')}">{[account.daily_pnl]}</td>
-                    <td v-bind:style="{color:(account.holding_pnl >= 0?'red':'green')}">{[account.holding_pnl]}</td>
-                    <td v-bind:style="{color:(account.realized_pnl >= 0?'red':'green')}">{[account.realized_pnl]}</td>
-                    <td>{[account.frozen_cash]}</td>
-                    <td>{[account.cash]}</td>
-                    <td>{[account.market_value]}</td>
-                    <td>{[account.transaction_cost]}</td>
+                <tr v-for="a in accounts">
+                    <td>{[a['account-id']]}</td>
+                    <td>{[a.currency]}</td>
+                    <td>{[a.type]}</td>
+                    <td>{[a.balance]}</td>
                 </tr>
            </tbody>
         </table>
-            <table class="table table-striped table-hover table-condensed" id="position">
-                <caption>持仓信息</caption>
-               <thead>
-                  <tr>
-                      <th>代码</th>
-                      <th>持仓盈亏</th>
-                      <th>平仓盈亏</th>
-                      <th>日内盈亏</th>
-                      <th>买入持仓</th>
-                      <th>卖出持仓</th>
-                      <th>手续费</th>
-                      <th>保证金</th>
-                      <th>市场价值</th>
-                      <th>保证金率</th>
-                      <th>合约乘数</th>
-                  </tr>
-               </thead>
-               <tbody>
-                    <tr v-for="(pos, o_id) in position">
-                        <td>{[pos.order_book_id]}</td>
-                        <td v-bind:style="{color:(pos.holding_pnl >= 0?'red':'green')}">{[pos.holding_pnl]}</td>
-                        <td v-bind:style="{color:(pos.realized_pnl >= 0?'red':'green')}">{[pos.realized_pnl]}</td>
-                        <td v-bind:style="{color:(pos.daily_pnl >= 0?'red':'green')}">{[pos.daily_pnl]}</td>
-                        <td>{[pos.buy_holding_list]}</td>
-                        <td>{[pos.sell_holding_list]}</td>
-                        <td>{[pos.transaction_cost]}</td>
-                        <td>{[pos.margin]}</td>
-                        <td>{[pos.market_value]}</td>
-                        <td>{[pos.margin_rate*100 + '%']}</td>
-                        <td>{[pos.contract_multiplier]}</td>
-                    </tr>
-               </tbody>
-            </table>
-            <table class="table table-striped table-hover table-condensed" id="trade">
+            <table class="table table-striped table-hover table-condensed" id="trades">
                 <caption>交易信息</caption>
                <thead>
                   <tr>
-                      <th>时间</th>
-                      <th>代码</th>
-                      <th>买卖</th>
-                      <th>价格</th>
-                      <th>数量</th>
-                      <th>开平</th>
+                      <th>流水号</th>
+                      <th>订单ID</th>
+                      <th>交易对</th>
+                      <th>帐号ID</th>
+                      <th>订单数量</th>
+                      <th>订单价格</th>
+                      <th>创建时间</th>
+                      <th>类型</th>
+                      <th>来源</th>
+                      <th>状态</th>
+                      <th>Role</th>
+                      <th>成交价格</th>
+                      <th>成交数量</th>
+                      <th>未成交数量</th>
+                      <th>成交金额</th>
                       <th>手续费</th>
                   </tr>
                </thead>
                <tbody>
-                    <tr v-for="t in trade">
-                        <td>{[t.trading_datetime]}</td>
-                        <td>{[t.order_book_id]}</td>
-                        <td v-bind:style="{color:(t.side == 'BUY'?'red':'green')}" >{[t.side]}</td>
-                        <td>{[t.last_price]}</td>
-                        <td>{[t.last_quantity]}</td>
-                        <td>{[t.position_effect]}</td>
-                        <td>{[t.transaction_cost]}</td>
+                    <tr v-for="t in trades">
+                        <td>{[t['seq-id']]}</td>
+                        <td>{[t['order-id']]}</td>
+                        <td>{[t['symbol']]}</td>
+                        <td>{[t['account-id']]}</td>
+                        <td>{[t['order-amount']]}</td>
+                        <td>{[t['order-price']]}</td>
+                        <td>{[t['created-at']]}</td>
+                        <td>{[t['order-type']]}</td>
+                        <td>{[t['order-source']]}</td>
+                        <td>{[t['order-state']]}</td>
+                        <td>{[t['role']]}</td>
+                        <td>{[t['price']]}</td>
+                        <td>{[t['filled-amount']]}</td>
+                        <td>{[t['unfilled-amount']]}</td>
+                        <td>{[t['filled-cash-amount']]}</td>
+                        <td>{[t['filled-fees']]}</td>
                     </tr>
                </tbody>
             </table>
@@ -234,7 +204,7 @@ overflow:scroll; //超过部分使用滚动条
 
 <footer class="footer navbar-fixed-bottom">
       <div class="container">
-        <p class="text-muted" align="center" style="margin-top: 20px;color:#878B91;">凯瑞投资回测可视化@copyright 2018</p>
+        <p class="text-muted" align="center" style="margin-top: 20px;color:#878B91;">huobitrade可视化@copyright 2018</p>
         </div>
     </footer>
 <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -251,21 +221,6 @@ var code = $('#code').val();
 var max_bar = 1000;
 var is_first = true;
 var draw_counts = 0;
-var vm = new Vue({
-el: '#app',
-delimiters: ['{[', ']}'],
-data:{
-bar: bar,
-account: {},
-position: {},
-trade: [],
-codes: []},
-<!--computed: {-->
-    <!--codes : function(){-->
-        <!--return Object.keys(this.bar);-->
-    <!--}}-->
-    }
-    )
 
 option = {
     title : {
@@ -341,16 +296,7 @@ option = {
                     }
                 },
                 data: [
-                    {
-                        name: 'highest value',
-                        type: 'max',
-                        valueDim: 'highest'
-                    },
-                    {
-                        name: 'lowest value',
-                        type: 'min',
-                        valueDim: 'lowest'
-                    }
+
                 ],
                 tooltip: {
                     formatter: function (param) {
@@ -402,42 +348,34 @@ option = {
     ]
 }
 
-myChart.showLoading();
-
-function addBar(data){
-    if(is_first){
-        setCode(data.code);
-        is_first = false;
-    }
-
-    vm.codes = Object.keys(bar);
-    if(data.code in bar){
-        bar[data.code].push([data.open, data.close, data.high, data.low]);
-        categoryData[data.code].push(data.datetime);
-    }else{
-        bar[data.code] = [];
-        categoryData[data.code] =[];
-        bar[data.code].push([data.open, data.close, data.high, data.low]);
-        categoryData[data.code].push(data.datetime);
-    }
-
-    <!--bar_data = {d.code:[d.datetime, d.open, d.close, d.high, d.low]};-->
-    <!--categoryData.push(data[0]);-->
-    <!--bar.push(data.slice(1));-->
-    x = categoryData[code];
-    option.xAxis[0].data=x.slice(-max_bar);
-    option.series[0].data=bar[code].slice(-max_bar);
-    option.dataZoom.startValue=x[x.length-size];
-    option.dataZoom.endValue=x[x.length-1];
-
-
-    draw_counts += 1;
-    if(is_huatu&&draw_counts >=vm.codes.length*60){
-        myChart.setOption(option);
-        draw_counts = 0;
-    }
+var vm = new Vue({
+el: '#app',
+delimiters: ['{[', ']}'],
+data:{
+bar: [],
+accounts: {},
+position: {},
+trades: [],
+codes: [],
+Eoption: option},
+watch:{
+           bar:{//深度监听，可监听到对象、数组的变化
+            handler(val){
+                this.Eoption.series[0].data = val.map(function(d){return d.slice(1, 5)});
+                this.Eoption.xAxis[0].data = val.map(function(d){return d[0]});
+                myChart.setOption(this.Eoption);
+            },
+            deep:true
+            }
 }
+<!--computed: {-->
+    <!--codes : function(){-->
+        <!--return Object.keys(this.bar);-->
+    <!--}}-->
+    }
+    )
 
+myChart.showLoading();
 
 function addTrade(trade_data){
     data = [trade_data.trading_datetime, trade_data.last_price, trade_data.side];
@@ -518,90 +456,70 @@ function updatePosition(data){
     vm.position[data['order_book_id']] = data;
 }
 
-function setCode(c){
-    code = c;
-    $('#code').val(c);
-    option.series[0].name = code;
-    option.legend.data = [code, 'MA5',  'MA10', 'MA30', 'MA60'];
-}
-
 myChart.hideLoading();
-$(function () {
-        function manages(info){
-            if (window.s) {
-                window.s.close();
-            }
-            /*创建socket连接*/
-            var url = "ws://{{host}}:7214/"; //"ws://localhost:8000"; //
-            var socket = new WebSocket(url); //window.location.host  192.168.2.237:7214
-            socket.onopen = function () {
-                console.log('WebSocket open');//成功连接上Websocket
-                if(info) alert('WebSocket open');
-            };
-            var x=null,y=null;
-            socket.onmessage = function (e) {
-                <!--console.log('message: ' + e.data);//打印出服务端返回过来的数据-->
-                var d= $.parseJSON(e.data);
-                if(d.topic=='bar'){
-                    addBar(d);
-                }else if(d.topic=='trade'){
-                    addTrade(d);
-                }else if(d.topic=='account'){
-                    updateAccount(d);
-                }else if(d.topic=='position'){
-                    updatePosition(d);
-                }else if(d.topic=='extra'){
-                    addExtra(d);
-                }
-            };
-            // Call onopen directly if socket is already open
-            if (socket.readyState == WebSocket.OPEN) socket.onopen();
-            window.s = socket;
-        }
-        manages(false);
-        $('#connect_websocket').click(function () {
-            manages(true);
-        });
-        $('#send_message').click(function () {
-            //如果未连接到websocket
-            is_huatu = true;
-            if (!window.s) {
-                alert("websocket未连接.");
-            } else {
-                window.s.send($('#message').val());//通过websocket发送数据
-            }
-        });
-        $('#close_websocket').click(function () {
-            if (window.s) {
-                window.s.close();//关闭websocket
-                console.log('websocket已关闭');
-            }
-        });
-        $('#close_ht').click(function () {
-            is_huatu = false;
-            size = $('#message').val()-0;
-        });
-    });
 
 $(document).ready(function() {
     namespace = '/ws';
     console.log(location.protocol + '//' + document.domain + ':' + location.port + namespace);
     var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port + namespace);
-        socket.on('klines', function(res) {
-        console.log(res)
+        socket.on('klines', function(klines) {
+            <!--option.series[0].data = [];-->
+            klines.reverse();
+            temp_bar = [];
+            for (let k of klines){
+                temp_bar.push([k.id, k.open, k.close, k.high, k.low]);
+            }
+            vm.bar = temp_bar;
     });
-        socket.on('kline_tick', function(res) {
-        console.log(res)
+        socket.on('kline_tick', function(k) {
+            if (vm.bar[vm.bar.length - 1][0] == k['id']){
+                vm.bar.splice(-1, 1, [k.id, k.open, k.close, k.high, k.low]);
+            }else{
+                vm.bar.push([k.id, k.open, k.close, k.high, k.low]);
+            }
     });
-        socket.on('account', function(res) {
-        console.log(res)
+        socket.on('accounts', function(acc) {
+            vm.accounts = acc.list;
+            console.log(acc);
     });
-        socket.on('orders', function(res) {
-        console.log(res)
+        socket.on('orders', function(order) {
+            up_to_date = false;
+            for (var i in vm.trades){
+                if(order['order-id'] == vm.trades[i]['order-id']){
+                    vm.trades[i] = order;
+                    up_to_date = true;
+                    break;
+                }
+            }
+            if(!up_to_date){vm.trades.push(order)};
+            console.log(order)
     });
         socket.on('connect', function(res) {
-        socket.emit('get_klines', { symbol: 'dcreth', period: '1min' });
-        console.log(res)
+        socket.emit('get_klines', { symbol: code, period: '1min' });
+        socket.emit('sub_kline', { symbol: code, period: '1min' });
+        console.log(res);
+    });
+    <!--setTimeout(function(){-->
+        <!--socket.emit('sub_accounts');-->
+    <!--}, 5000)-->
+    $.get('/data/get_symbols',{},function(data){
+        symbols = JSON.parse(data);
+        vm.codes = [];
+        for (var i in symbols){
+            vm.codes.push(symbols[i].symbol);
+            }
+        console.log(symbols);
+    });
+    $("[href='#c']").on('click', function(){
+            console.log('tesing');
+            <!--console.log($(this).text());-->
+            <!--old_code =  $('#code').val();-->
+            <!--new_code = this.text;-->
+            <!--$('#code').val(c);-->
+            <!--socket.emit('unsub_kline', { symbol: old_code, period: '1min' });-->
+            <!--socket.emit('get_klines', { symbol: new_code, period: '1min' });-->
+            <!--socket.emit('sub_kline', { symbol: new_code, period: '1min' });-->
+            <!--option.legend.data = [code, 'MA5',  'MA10', 'MA30', 'MA60'];-->
     });
 
 });

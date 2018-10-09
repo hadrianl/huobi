@@ -115,7 +115,7 @@ class BaseWebsocket(object):
         """ 注销handle_func """
         handler_list = self._handle_funcs.get(topic, [])
         for i, h in enumerate(handler_list):
-            if h is _handle_func_name:
+            if h is _handle_func_name or h.__name__ == _handle_func_name:
                 handler_list.pop(i)
 
         if self._handle_funcs.get(topic) == []:
