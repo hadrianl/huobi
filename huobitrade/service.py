@@ -40,7 +40,7 @@ class HBRestAPI(metaclass=Singleton):
                 accounts = self.get_accounts()['data']
                 self.acc_id = self.get_accounts()['data'][0]['id']
                 if len(accounts) > 1:
-                    warnings.warn(f'存在多个账户id，默认设置acc_id为{self.acc_id}')
+                    warnings.warn(f'默认设置acc_id为{self.acc_id}')
             except Exception as e:
                 raise Exception(f'Failed to get account: key may not be set ->{e}')
 

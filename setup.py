@@ -6,7 +6,7 @@
 # @Contact   : 137150224@qq.com
 
 from setuptools import setup, find_packages
-__version__ = "0.4.8"
+__version__ = "0.4.9"
 
 with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()
@@ -17,7 +17,8 @@ requires = ['websocket-client>=0.53',
             'pyzmq',
             'pandas',
             'requests-futures',
-            'ecdsa']
+            'ecdsa',
+            'click']
 
 hb_packages = ['huobitrade', 'huobitrade/extra']
 
@@ -30,6 +31,11 @@ setup(name='huobitrade',
       autor_email='137150224@qq.com',
       url='https://hadrianl.github.io/huobi/',
       packages=hb_packages,
+      entry_points={
+          "console_scripts": [
+              "huobitrade = huobitrade.main:entry_point"
+          ]
+      },
       classifiers=(
           "Development Status :: 5 - Production/Stable",
           "Natural Language :: Chinese (Simplified)",

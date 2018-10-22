@@ -31,13 +31,14 @@
 - [HuoBi Trading](#火币api的python版)
     - [1. Installation](#1-installation)
     - [2. Usage](#2-usage)
-        - [2.1.1 WebSocket API](#211-websocket-api)
-        - [2.1.2 Auth WebSocket API](#212-auth-websocket-api)
-        - [2.2 Restful API](#22-restful-api)
-        - [2.3 Restful API-Decoration    （Experimental）](#23-restful-api-decorationexperimental)
-        - [2.4 Message Handler](#24-message-handler)
-        - [2.5 Latest Message Handler](#25-latest-message-handler)
-        - [2.6 HBData](#26-hbdata)
+        - [2.1 huobitrade CLI Tool](#21-huobitrade-cli-tool)
+        - [2.2.1 WebSocket API](#221-websocket-api)
+        - [2.2.2 Auth WebSocket API](#222-auth-websocket-api)
+        - [2.3 Restful API](#23-restful-api)
+        - [2.4 Restful API-Decoration    （Experimental）](#24-restful-api-decorationexperimental)
+        - [2.5 Message Handler](#25-message-handler)
+        - [2.6 Latest Message Handler](#26-latest-message-handler)
+        - [2.7 HBData](#27-hbdata)
     - [3. Extra](#3-extra)
 
 
@@ -70,7 +71,14 @@ pip install huobitrade
     1. 基于`flask`写的一个用于查询当日成交明细和成交分布图，很丑很简陋
     2. 有兴趣的小伙伴可以联系我
 
-### 2.1.1 WebSocket API
+### 2.1 huobitrade CLI Tool
+- 0.4.9版本新增命令行工具`huobitrade`
+- `huobitrade run -f strategy.py -a access-key -s secret-key`用于启用一个基本简单的策略，其中strategy里应该可以包含一个init和handle_func用于初始化或处理相关topic
+- 连接和鉴权成功后，会进入交互环境，提供6个命名空间来进行交互，包括`restapi` `ws` `auth_ws` `account` `data` `margin`,分别都是huobitrade几个主要类的实例huobi
+- `huobitrade run --help`通过该命令获取帮助
+
+
+### 2.2.1 WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
 
@@ -100,7 +108,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 
 ```
 
-### 2.1.2 Auth WebSocket API
+### 2.2.2 Auth WebSocket API
 ```python
 from huobitrade.service import HBWebsocket
 setKey('your acess_key', 'you secret_key')
@@ -118,7 +126,7 @@ def auth_handle(msg):
 ```
 
 
-### 2.2 Restful API
+### 2.3 Restful API
 - restapi需要先用`setKey`设置密钥
 - 默认交易和行情url都是https://api.huobi.br.com （调试用）,实盘要用`from huobitrade import setUrl`设置url
 
@@ -138,7 +146,7 @@ for r in results:
     print(r)
 ```
 
-### 2.3 Restful API-Decoration（Experimental）
+### 2.4 Restful API-Decoration（Experimental）
 - 用装饰器来初始化回调处理函数
 
 ```python
@@ -155,7 +163,7 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 
 ```
 
-### 2.4 Message Handler
+### 2.5 Message Handler
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 
 ```python
@@ -185,7 +193,7 @@ handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
 hb.register_handler(handler)
 ```
 
-### 2.5 Latest Message Handler
+### 2.6 Latest Message Handler
 - 基于handler函数根据策略复杂度和性能的的不同造成对message的处理时间不一样，可能造成快生产慢消费的情况，增加lastest参数，每次都是handle最新的message
 ```python
 class MyLatestHandler(BaseHandler):
@@ -197,7 +205,7 @@ class MyLatestHandler(BaseHandler):
         print(topic, msg)
 ```
 
-### 2.6 HBData
+### 2.7 HBData
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
 
 ```python
@@ -207,7 +215,7 @@ from huobitrade.datatype import HBMarket, HBAccount, HBMargin
 
 data = HBMarket()  # 行情接口类
 account = HBAccount()  # 交易接口类
-margin = HBMargin()  # 借贷接口类
+data  # 借贷接口类
 
 data.omgeth
 　# <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
