@@ -5,3 +5,4 @@ requests-futures
 python-dateutil
 pandas
 ecdsa
+click
