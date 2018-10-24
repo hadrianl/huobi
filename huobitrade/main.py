@@ -15,22 +15,28 @@ import time
 import traceback
 
 @click.group()
+@click.version_option('0.5.0')
+@click.help_option(help='HuoBiTrade命令行工具帮助')
 def cli():
-    ...
+    click.secho('Welcome to HuoBiTrade!', fg='blue')
+    click.edit()
 
 
 @click.command()
 @click.option('-f', '--file', default=None, type=click.Path(exists=True), help='策略文件')
-@click.option('-a', '--access-key', help='访问密钥')
-@click.option('-s', '--secret-key', help='私密密钥')
+@click.option('-a', '--access-key', prompt='Access-key', help='访问密钥')
+@click.option('-s', '--secret-key', prompt='Secret-key', help='私密密钥')
 @click.option('--url', help='火币服务器url，默认为api.huobi.br.com')
 @click.option('--reconn', type=click.INT, help='重连次数，默认为-1，即无限重连')
 def run(file, access_key, secret_key, **kwargs):
+    """命令行运行huobitrade"""
     if file:
         strategy_module = importlib.import_module(os.path.splitext(file)[0])
         init = getattr(strategy_module, 'init', None)
         handle_func = getattr(strategy_module, 'handle_func', None)
         scedule = getattr(strategy_module, 'scedule', None)
+    else:
+        init, handle_func, scedule = [None] * 3
 
     setKey(access_key, secret_key)
     url = kwargs.get('url')
@@ -101,6 +107,33 @@ def run(file, access_key, secret_key, **kwargs):
     ws.stop()
     auth_ws.stop()
 
+@click.command('test_conn')
+@click.option('-a', '--access-key', prompt='Access-key', help='访问密钥')
+@click.option('-s', '--secret-key', prompt='Secret-key', help='私密密钥')
+def test_connection(access_key, secret_key):
+    """通过查询账户信息测试密钥是否可用"""
+    setKey(access_key, secret_key)
+    from huobitrade import HBRestAPI
+    api = HBRestAPI()
+    try:
+        account = api.get_accounts()
+        if account['status'] == 'ok':
+            click.secho('连接成功！', fg='blue')
+            click.echo(account['data'])
+        else:
+            click.secho('连接失败！', fg='red')
+            click.secho(account['err-msg'], fg='red')
+    except Exception as e:
+        click.echo(traceback.format_exc())
+
+@click.command('doc')
+def document():
+    """打开huobitrade文档"""
+    click.launch('https://hadrianl.github.io/huobi/')
+
+
 def entry_point():
     cli.add_command(run)
+    cli.add_command(test_connection)
+    cli.add_command(document)
     cli()
