@@ -75,7 +75,7 @@ pip install huobitrade
 - 0.4.9版本新增命令行工具`huobitrade`
 - 0.5.0版本新增命令`test_conn` `doc`
 - `huobitrade run -f strategy.py -a access-key -s secret-key`用于启用一个基本简单的策略，其中strategy里应该可以包含一个init和handle_func用于初始化或处理相关topic.连接和鉴权成功后，会进入交互环境，提供6个命名空间来进行交互，包括`restapi` `ws` `auth_ws` `account` `data` `margin`,分别都是huobitrade几个主要类的实例huobi
-- `huobitrade test_conn`用于测试是否可以正常连接， `huobitrade doc`打开huobitrade文档(暂时存在一个bug，用`doc`命令打开web文档前会弹出一个文本的编辑，估计是click这个库的bug)
+- `huobitrade test_conn`用于测试是否可以正常连接， `huobitrade doc`打开huobitrade文档
 - `huobitrade --help`通过该命令获取帮助
 
 

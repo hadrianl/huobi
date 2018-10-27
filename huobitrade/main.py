@@ -19,8 +19,6 @@ import traceback
 @click.help_option(help='HuoBiTrade命令行工具帮助')
 def cli():
     click.secho('Welcome to HuoBiTrade!', fg='blue')
-    click.edit()
-
 
 @click.command()
 @click.option('-f', '--file', default=None, type=click.Path(exists=True), help='策略文件')
