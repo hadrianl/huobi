@@ -12,6 +12,8 @@ from abc import abstractmethod
 import zmq
 import pickle
 from .extra.rpc import RPCServer
+from queue import deque
+from concurrent.futures import ThreadPoolExecutor
 
 
 class BaseHandler:
@@ -22,6 +24,7 @@ class BaseHandler:
         self.ctx = zmq_ctx
         self.sub_socket = self.ctx.socket(zmq.SUB)
         self.sub_socket.setsockopt(zmq.RCVTIMEO, 3000)
+        self._thread_pool = ThreadPoolExecutor(max_workers=1)
         self.inproc = set()
 
         if self.topic:  # 如果topic默认为None，则对所有的topic做处理
@@ -31,14 +34,15 @@ class BaseHandler:
             self.sub_socket.subscribe('')
 
         if kwargs.get('latest', False):  # 可以通过latest(bool)来订阅最新的数据
-            self.latest_handle_thread = Thread(name=f'{self.name}-latest_handle')
+            self.data_queue = deque(maxlen=1)
             self.latest = True
         else:
+            self.data_queue = deque()
             self.latest = False
-        self.thread = Thread(name=self.name)
         self.__active = False
 
     def run(self):
+        self.task = self._thread_pool.submit(logger.info, f'Handler:{self.name}启用')
         while self.__active:
             try:
                 topic_, msg_ = self.sub_socket.recv_multipart()
@@ -46,16 +50,18 @@ class BaseHandler:
                     break
                 topic = pickle.loads(topic_)
                 msg = pickle.loads(msg_)
-                if not self.latest:  # 对所有msg做处理
-                    self.handle(topic, msg)
-                elif not self.latest_handle_thread.is_alive():  # 只对latest的msg做处理
-                    self.latest_handle_thread = Thread(target=self.handle, args=(topic, msg), name=f'{self.name}-latest_handle')
-                    self.latest_handle_thread.setDaemon(True)
-                    self.latest_handle_thread.start()
+                self.data_queue.append([topic, msg])
+                if len(self.data_queue) >= 1000:
+                    logger.warning(f'Handler:{self.name}未处理msg超过1000！')
+
+                if self.task.done():
+                    self.task = self._thread_pool.submit(self.handle, *self.data_queue.popleft())
             except zmq.error.Again:
                 ...
             except Exception as e:
                 logger.exception(f'<Handler>-{self.name} exception:{e}')
+        self._thread_pool.shutdown()
+        logger.info(f'Handler:{self.name}停止')
 
     def add_topic(self, new_topic):
         self.sub_socket.setsockopt(zmq.SUBSCRIBE, pickle.dumps(new_topic))

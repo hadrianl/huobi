@@ -15,7 +15,7 @@ import time
 import traceback
 
 @click.group()
-@click.version_option('0.5.0')
+@click.version_option('0.5.1')
 @click.help_option(help='HuoBiTrade命令行工具帮助')
 def cli():
     click.secho('Welcome to HuoBiTrade!', fg='blue')
@@ -29,7 +29,10 @@ def cli():
 def run(file, access_key, secret_key, **kwargs):
     """命令行运行huobitrade"""
     if file:
-        strategy_module = importlib.import_module(os.path.splitext(file)[0])
+        import sys
+        file_path, file_name = os.path.split(file)
+        sys.path.append(file_path)
+        strategy_module = importlib.import_module(os.path.splitext(file_name)[0])
         init = getattr(strategy_module, 'init', None)
         handle_func = getattr(strategy_module, 'handle_func', None)
         scedule = getattr(strategy_module, 'scedule', None)
@@ -87,6 +90,15 @@ def run(file, access_key, secret_key, **kwargs):
                 ws.register_handle_func(k)(v)
             else:
                 auth_ws.register_handle_func(k)(v)
+
+    if scedule:
+        print('testing')
+        from huobitrade.handler import TimeHandler
+        interval = scedule.__kwdefaults__['interval']
+        timerhandler = TimeHandler('sceduler', interval)
+        timerhandler.handle = lambda msg: scedule(restapi, ws, auth_ws)
+        timerhandler.start()
+
 
     while True:
         try:

@@ -15,10 +15,15 @@ def init(restapi:HBRestAPI, ws:_HBWS, auth_ws:_AuthWS):
     print(auth_ws.sub_orders())
 
 def handle_depth(msg):
-    print(msg)
+    # print(msg)
+    ...
 
 def handle_account(msg):
-    print(msg)
+    # print(msg)
+    ...
 
 handle_func = {'market.omgeth.depth.step0': handle_depth,
                'accounts': handle_account}
+
+def scedule(restapi:HBRestAPI, ws:_HBWS, auth_ws:_AuthWS, *, interval=10):
+    print(interval)

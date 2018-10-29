@@ -22,7 +22,6 @@ import requests
 from functools import wraps
 import time
 import zmq
-from enum import Enum
 
 _format = "%(asctime)-15s [%(levelname)s] [%(name)s] %(message)s"
 _datefmt = "%Y/%m/%d %H:%M:%S"
@@ -50,6 +49,30 @@ DEPTH = {
     4: 'step4',
     5: 'step5'
 }
+
+class Depth:
+    Step0 = 'step0'
+    Step1 = 'step1'
+    Step2 = 'step2'
+    Step3 = 'step3'
+    Step4 = 'step4'
+    Step5 = 'step5'
+
+class OrderType:
+    BuyMarket = 'buy-market'  # '市价买'
+    SellMarket = 'sell-market'  # '市价卖'
+    BuyLimit = 'buy-limit' #'限价买'
+    SellLimit = 'sell-limit' # '限价卖'
+    BuyIoc = 'buy-ioc'  #'IOC买单'
+    SellIoc = 'sell-ioc'  #'IOC卖单
+
+class OrserStatus:
+    PreSumitted = 'pre-submitted' # '准备提交'
+    Submitted = 'submitted' # '已提交'
+    PartialFilled = 'partial-filled' # '部分成交'
+    PartialCanceled = 'partial-canceled'  # '部分成交撤销'
+    Filled = 'filled'  # '完全成交'
+    Canceled = 'canceled'  # '已撤销'
 
 
 ORDER_TYPE = {
