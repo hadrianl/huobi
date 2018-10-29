@@ -14,7 +14,7 @@ import pickle
 from .extra.rpc import RPCServer
 from queue import deque
 from concurrent.futures import ThreadPoolExecutor
-
+import time
 
 class BaseHandler:
     def __init__(self, name, topic: (str, list) = None, *args, **kwargs):
@@ -99,20 +99,23 @@ class TimeHandler:
         self.name = name
         self.interval = interval
         self.get_msg = get_msg
+        self._active = False
 
-    def run(self):
-        try:
-            msg = self.get_msg() if self.get_msg else None
-            self.handle(msg)
-        except Exception as e:
-            logger.exception(f'<TimeHandler>-{self.name} exception:{e}')
+    def run(self, interval):
+        while self._active:
+            try:
+                msg = self.get_msg() if self.get_msg else None
+                self.handle(msg)
+            except Exception as e:
+                logger.exception(f'<TimeHandler>-{self.name} exception:{e}')
+            finally:
+                time.sleep(interval)
 
     def stop(self):
-        self.timer.cancel()
-        self.timer.join()
+        self._active = False
 
     def start(self):
-        self.timer = Timer(self.interval, self.run)
+        self.timer = Thread(target=self.run, args=(self.interval, ))
         self.timer.setName(self.name)
         self.timer.setDaemon(True)
         self.timer.start()

@@ -25,5 +25,5 @@ def handle_account(msg):
 handle_func = {'market.omgeth.depth.step0': handle_depth,
                'accounts': handle_account}
 
-def scedule(restapi:HBRestAPI, ws:_HBWS, auth_ws:_AuthWS, *, interval=10):
+def schedule(restapi:HBRestAPI, ws:_HBWS, auth_ws:_AuthWS, *, interval=10):
     print(interval)

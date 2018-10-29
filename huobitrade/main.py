@@ -35,7 +35,7 @@ def run(file, access_key, secret_key, **kwargs):
         strategy_module = importlib.import_module(os.path.splitext(file_name)[0])
         init = getattr(strategy_module, 'init', None)
         handle_func = getattr(strategy_module, 'handle_func', None)
-        scedule = getattr(strategy_module, 'scedule', None)
+        schedule = getattr(strategy_module, 'schedule', None)
     else:
         init, handle_func, scedule = [None] * 3
 
@@ -91,12 +91,12 @@ def run(file, access_key, secret_key, **kwargs):
             else:
                 auth_ws.register_handle_func(k)(v)
 
-    if scedule:
+    if schedule:
         print('testing')
         from huobitrade.handler import TimeHandler
         interval = scedule.__kwdefaults__['interval']
-        timerhandler = TimeHandler('sceduler', interval)
-        timerhandler.handle = lambda msg: scedule(restapi, ws, auth_ws)
+        timerhandler = TimeHandler('scheduler', interval)
+        timerhandler.handle = lambda msg: schedule(restapi, ws, auth_ws)
         timerhandler.start()
 
 
