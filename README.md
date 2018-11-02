@@ -114,6 +114,7 @@ hb.unregister_onRsp('market.btcusdt.kline.1min')  # 注销某topic的请求回�
 
 ### 2.2.2 Auth WebSocket API
 ```python
+from huobitrade import setKey
 from huobitrade.service import HBWebsocket
 setKey('your acess_key', 'you secret_key')
 hb = HBWebsocket(auth=True)  # 可以填入url参数，默认是api.huobi.br.com
@@ -142,8 +143,8 @@ setKey('your acess_key', 'you secret_key')  # setKey很重要，最好在引入�
 api = HBRestAPI(get_acc=True)  # get_acc参数默认为False,初始化不会取得账户ID，需要ID的函数无法使用.也可用api.set_acc_id('you_account_id')
 print(api.get_timestamp())
 
-api = HBRestAPI(get_acc=True)　# 异步请求
-klines = api.get_kline('omgeth', _async=True)
+api = HBRestAPI(get_acc=True) # 异步请求
+klines = api.get_kline('omgeth', '1min', _async=True)
 symbols = api.get_symbols(_async=True)
 results = api.async_request([klines, symbols])
 for r in results:
@@ -172,7 +173,11 @@ handle_func()  # __call__调用函数会请求并用handle_func做回调处理
 
 ```python
 from huobitrade.handler import BaseHandler
-fromm huobitrade.util import handler_profiler
+from huobitrade.utils import handler_profiler
+from huobitrade import setKey
+from huobitrade.service import HBWebsocket
+setKey('your acess_key', 'you secret_key')
+hb = HBWebsocket(auth=True)  # 可以填入url参数，默认是api.huobi.br.com
 
 class MyHandler(BaseHandler):
     def __init__(self, topic, *args, **kwargs):
@@ -193,6 +198,10 @@ hb.register_handler(handler)  # 通过register来把handler注册到相应的top
 
 ```python
 from huobitrade.handler import DBHandler
+from huobitrade import setKey
+from huobitrade.service import HBWebsocket
+setKey('your acess_key', 'you secret_key')
+hb = HBWebsocket(auth=True)  # 可以填入url参数，默认是api.huobi.br.com
 handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
 hb.register_handler(handler)
 ```
@@ -200,6 +209,8 @@ hb.register_handler(handler)
 ### 2.6 Latest Message Handler
 - 基于handler函数根据策略复杂度和性能的的不同造成对message的处理时间不一样，可能造成快生产慢消费的情况，增加lastest参数，每次都是handle最新的message
 ```python
+from huobitrade.handler import BaseHandler
+from huobitrade.utils import handler_profiler
 class MyLatestHandler(BaseHandler):
     def __init__(self, topic, *args, **kwargs):
         BaseHandler.__init__(self, 'just Thread name', topic, latest=True)
@@ -219,16 +230,16 @@ from huobitrade.datatype import HBMarket, HBAccount, HBMargin
 
 data = HBMarket()  # 行情接口类
 account = HBAccount()  # 交易接口类
-data  # 借贷接口类
+margin = HBMargin()  # 借贷接口类
 
 data.omgeth
-　# <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
+ # <Symbol:omgeth-{'base-currency': 'omg', 'quote-currency': 'eth', 'price-precision': 6, 'amount-precision': 4, 'symbol-partition': 'main'}>
 data.omgeth.kline
-　# <<class 'huobitrade.datatype.HBKline'> for omgeth>
+ # <<class 'huobitrade.datatype.HBKline'> for omgeth>
 data.omgeth.depth
-　# <<class 'huobitrade.datatype.HBDepth'> for omgeth>
+ # <<class 'huobitrade.datatype.HBDepth'> for omgeth>
 data.omgeth.ticker
-　# <<class 'huobitrade.datatype.HBTicker'> for omgeth>
+ # <<class 'huobitrade.datatype.HBTicker'> for omgeth>
 data.omgeth.kline._1min_200  # period前面加'_', 后面加数量最大值为2000
 data.omgeth.kline.last
 data.omgeth.kline.last_24_hour
