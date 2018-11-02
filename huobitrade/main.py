@@ -57,6 +57,7 @@ def run(file, access_key, secret_key, **kwargs):
     margin = HBMargin()
     ws_open = False
     ws_auth = False
+    
     @ws.after_open
     def _open():
         nonlocal ws_open

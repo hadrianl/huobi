@@ -20,6 +20,7 @@ import pickle
 import time
 from abc import abstractmethod
 import uuid
+from .handler import BaseHandler
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -99,6 +100,23 @@ class BaseWebsocket(object):
         if handler in self._handlers:
             self._handlers.remove(handler)
             handler.stop(self.name)
+
+    def __add__(self, handler):
+        if isinstance(handler, BaseHandler):
+            self.register_handler(handler)
+        else:
+            raise Exception('{handler} is not aHandler')
+
+        return self
+
+
+    def __sub__(self, handler):
+        if isinstance(handler, BaseHandler):
+            self.unregister_handler(handler)
+        else:
+            raise Exception('{handler} is not aHandler')
+
+        return self
     # -----------------------------------------------------------------
 
     # --------------------- 注册handle_func --------------------------
