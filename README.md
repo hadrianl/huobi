@@ -18,11 +18,7 @@
 - 深度数据则命名为depth
 
 ## Lastest
-- WS中的addr参数为了配合现在的鉴权WS，变成了host参数，之前需要用`addr=wss://api.huobi.br.com/ws`的,现在用`host=api.huobi.br.com`
-- 新增了WS接口的after_open装饰器（鉴权ws是after_auth）,用于回调WS连接成功后的函数
-- 修改了部分命名
-- 目前鉴权WS与普通行情WS已经分开两模块，通过统一工厂函数HBWebsocket调用(auth参数)
-- 新增同一个handler被注册进多个ws的支持，解决开多个ws的冲突问题
+- 新增huobitrade命令行工具，通过`huobitrade run`运行，详看[huobitrade CLI Tool](#21-huobitrade-cli-tool)
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 [![GitHub forks](https://img.shields.io/github/forks/hadrianl/huobi.svg)](https://github.com/hadrianl/huobi/network)
@@ -75,8 +71,6 @@ pip install huobitrade
     2. 有兴趣的小伙伴可以联系我
 
 ### 2.1 huobitrade CLI Tool
-- 0.4.9版本新增命令行工具`huobitrade`
-- 0.5.0版本新增命令`test_conn` `doc`
 - `huobitrade run -f strategy.py -a access-key -s secret-key`用于启用一个基本简单的策略，其中strategy里应该可以包含一个init和handle_func用于初始化或处理相关topic.连接和鉴权成功后，会进入交互环境，提供6个命名空间来进行交互，包括`restapi` `ws` `auth_ws` `account` `data` `margin`,分别都是huobitrade几个主要类的实例huobi
 - `huobitrade test_conn`用于测试是否可以正常连接， `huobitrade doc`打开huobitrade文档
 - `huobitrade --help`通过该命令获取帮助

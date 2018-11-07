@@ -15,7 +15,7 @@ import time
 import traceback
 
 @click.group()
-@click.version_option('0.5.1')
+@click.version_option('0.5.2')
 @click.help_option(help='HuoBiTrade命令行工具帮助')
 def cli():
     click.secho('Welcome to HuoBiTrade!', fg='blue')
@@ -57,7 +57,7 @@ def run(file, access_key, secret_key, **kwargs):
     margin = HBMargin()
     ws_open = False
     ws_auth = False
-    
+
     @ws.after_open
     def _open():
         nonlocal ws_open

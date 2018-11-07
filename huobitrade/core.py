@@ -21,6 +21,7 @@ import time
 from abc import abstractmethod
 import uuid
 from .handler import BaseHandler
+from concurrent.futures import ThreadPoolExecutor
 
 logger.debug(f'<TESTING>LOG_TESTING')
 
@@ -171,6 +172,7 @@ class BaseWebsocket(object):
             # on_data=self.on_data
         )
         self.ws_thread = Thread(target=self.ws.run_forever, name=self.name)
+        self.ws_thread.setDaemon(True)
         self.ws_thread.start()
 
     def stop(self):
@@ -188,6 +190,7 @@ class _AuthWS(BaseWebsocket):
         self._host = host
         self._path = '/ws/v1'
         self.addr = self._protocol + self._host + self._path
+        self._threadPool = ThreadPoolExecutor(max_workers=3)
         # self.name = f'HuoBiAuthWS{self.ws_count}'
         self.name = f'HuoBiAuthWS_{uuid.uuid1()}'
         self.sub_dict = {}  # 订阅列表
@@ -236,9 +239,10 @@ class _AuthWS(BaseWebsocket):
                         except Exception as e:
                             logger.error(f'<请求回调>{msg["topic"]}的回调函数{cb.__name__}异常-{e}')
 
-                _t = Thread(target=callbackThread, args=(msg,))
-                _t.setDaemon(True)
-                _t.start()
+                task = self._threadPool.submit(callbackThread, msg)
+                # _t = Thread(target=callbackThread, args=(msg,))
+                # _t.setDaemon(True)
+                # _t.start()
             elif op == 'auth':
                 logger.info(
                     f'<鉴权>鉴权成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
@@ -273,16 +277,19 @@ class _AuthWS(BaseWebsocket):
         params['op'] = 'auth'
         params['cid'] = cid
         self.send_message(params)
+        return 'auth', cid
 
     def sub_accounts(self, cid:str=''):
         msg = {'op': 'sub', 'cid': cid, 'topic': 'accounts'}
         self.send_message(msg)
         logger.info(f'<订阅>accouts-发送订阅请求 #{cid}#')
+        return msg['topic'], cid
 
     def unsub_accounts(self, cid:str=''):
         msg = {'op': 'unsub', 'cid': cid, 'topic': 'accounts'}
         self.send_message(msg)
         logger.info(f'<订阅>accouts-发送订阅取消请求 #{cid}#')
+        return msg['topic'], cid
 
     def sub_orders(self, symbol='*', cid:str=''):
         """
@@ -294,6 +301,7 @@ class _AuthWS(BaseWebsocket):
         msg = {'op': 'sub', 'cid': cid, 'topic': f'orders.{symbol}'}
         self.send_message(msg)
         logger.info(f'<订阅>orders-发送订阅请求*{symbol}* #{cid}#')
+        return msg['topic'], cid
 
     def unsub_orders(self, symbol='*', cid:str=''):
         """
@@ -305,6 +313,7 @@ class _AuthWS(BaseWebsocket):
         msg = {'op': 'unsub', 'cid': cid, 'topic': f'orders.{symbol}'}
         self.send_message(msg)
         logger.info(f'<订阅>orders-发送取消订阅请求*{symbol}* #{cid}#')
+        return msg['topic'], cid
 
     # ------------------------------------------------------------------------
     # ----------------------帐户请求函数--------------------------------------
@@ -312,6 +321,7 @@ class _AuthWS(BaseWebsocket):
         msg = {'op': 'req', 'cid': cid, 'topic': 'accounts.list'}
         self.send_message(msg)
         logger.info(f'<请求>accounts-发送请求 #{cid}#')
+        return msg['topic'], cid
 
     def req_orders(self, acc_id, symbol, states:list,
                    types:list=None,
@@ -344,11 +354,13 @@ class _AuthWS(BaseWebsocket):
 
         self.send_message(msg)
         logger.info(f'<请求>orders-发送请求 #{cid}#')
+        return msg['topic'], cid
 
     def req_orders_detail(self, order_id, cid:str=''):
         msg = {'op': 'req', 'order-id': order_id, 'cid': cid, 'topic': 'orders.detail'}
         self.send_message(msg)
         logger.info(f'<请求>accounts-发送请求 #{cid}#')
+        return msg['topic'], cid
 
     def after_auth(self,_func):  # ws开启之后需要完成的初始化处理
         @wraps(_func)
@@ -369,6 +381,7 @@ class _HBWS(BaseWebsocket):
         self._host = host
         self._path = '/ws'
         self.addr = self._protocol + self._host + self._path
+        self._threadPool = ThreadPoolExecutor(max_workers=3)
         # self.name = f'HuoBiWS{self.ws_count}'
         self.name = f'HuoBiWS_{uuid.uuid1()}'
         self.sub_dict = {}  # 订阅列表
@@ -428,9 +441,11 @@ class _HBWS(BaseWebsocket):
                                 cb(_m)
                             except Exception as e:
                                 logger.error(f'<请求回调>{msg["rep"]}的回调函数{cb.__name__}异常-{e}')
-                    _t = Thread(target=callbackThread, args=(msg, ))
-                    _t.setDaemon(True)
-                    _t.start()
+
+                    task = self._threadPool.submit(callbackThread, msg)
+                    # _t = Thread(target=callbackThread, args=(msg, ))
+                    # _t.setDaemon(True)
+                    # _t.start()
             elif msg['status'] == 'error':
                 logger.error(
                     f'<错误>{msg.get("id")}-ErrTime:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} ErrCode:{msg["err-code"]} ErrMsg:{msg["err-msg"]}'
@@ -469,29 +484,34 @@ class _HBWS(BaseWebsocket):
         msg = {'sub': 'market.overview', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>overview-发送订阅请求 #{_id}#')
+        return msg['sub'], _id
 
     def unsub_overview(self, _id=''):
         msg = {'unsub': 'market.overview', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>overview-发送取消订阅请求 #{_id}#')
+        return msg['unsub'], _id
 
     def sub_kline(self, symbol, period, _id=''):
         if self._check_info(symbol=symbol, period=period):
             msg = {'sub': f'market.{symbol}.kline.{period}', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>kline-发送订阅请求*{symbol}*@{period} #{_id}#')
+            return msg['sub'], _id
 
     def unsub_kline(self, symbol, period, _id=''):
         if self._check_info(symbol=symbol, period=period):
             msg = {'unsub': f'market.{symbol}.kline.{period}', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>kline-发送取消订阅请求*{symbol}*@{period} #{_id}#')
+            return msg['unsub'], _id
 
     def sub_depth(self, symbol, depth=0, _id=''):
         if self._check_info(symbol=symbol, depth=depth):
             msg = {'sub': f'market.{symbol}.depth.{u.DEPTH[depth]}', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>depth-发送订阅请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
+            return msg['sub'], _id
 
     def unsub_depth(self, symbol, depth=0, _id=''):
         if self._check_info(symbol=symbol, depth=depth):
@@ -502,28 +522,33 @@ class _HBWS(BaseWebsocket):
             self.send_message(msg)
             logger.info(
                 f'<订阅>depth-发送取消订阅请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
+            return msg['unsub'], _id
 
     def sub_tick(self, symbol, _id=''):
         if self._check_info(symbol=symbol):
             msg = {'sub': f'market.{symbol}.trade.detail', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>tick-发送订阅请求*{symbol}* #{_id}#')
+            return msg['sub'], _id
 
     def unsub_tick(self, symbol, _id=''):
         if self._check_info(symbol=symbol):
             msg = {'unsub': f'market.{symbol}.trade.detail', 'id': _id}
             self.send_message(msg)
             logger.info(f'<订阅>tick-发送取消订阅请求*{symbol}* #{_id}#')
+            return msg['unsub'], _id
 
     def sub_all_lastest_24h_ohlc(self, _id=''):
         msg = {'sub': f'market.tickers', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送订阅请求 #{_id}#')
+        return msg['sub'], _id
 
     def unsub_all_lastest_24h_ohlc(self, _id=''):
         msg = {'unsub': f'market.tickers', 'id': _id}
         self.send_message(msg)
         logger.info(f'<订阅>all_ticks-发送取消订阅请求 #{_id}#')
+        return msg['unsub'], _id
     # -------------------------------------------------------------------------
 
     # -------------------------行情请求函数----------------------------------------
@@ -540,22 +565,26 @@ class _HBWS(BaseWebsocket):
                 msg.update({'to': int(_to)})
             self.send_message(msg)
             logger.info(f'<请求>kline-发送请求*{symbol}*@{period} #{_id}#')
+            return msg['req'], _id
 
     def req_depth(self, symbol, depth=0, _id=''):
         if self._check_info(depth=depth):
             msg = {'req': f'market.{symbol}.depth.{u.DEPTH[depth]}', 'id': _id}
             self.send_message(msg)
             logger.info(f'<请求>depth-发送请求*{symbol}*@{u.DEPTH[depth]} #{_id}#')
+            return msg['req'], _id
 
     def req_tick(self, symbol, _id=''):
-        msg = {'rep': f'market.{symbol}.trade.detail', 'id': _id}
+        msg = {'req': f'market.{symbol}.trade.detail', 'id': _id}
         self.send_message(msg)
         logger.info(f'<请求>tick-发送请求*{symbol}* #{_id}#')
+        return msg['req'], _id
 
     def req_symbol(self, symbol, _id=''):
-        msg = {'rep': f'market.{symbol}.detail', 'id': _id}
+        msg = {'req': f'market.{symbol}.detail', 'id': _id}
         self.send_message(msg)
         logger.info(f'<请求>symbol-发送请求*{symbol}* #{_id}#')
+        return msg['req'], _id
 
     # -------------------------------------------------------------------------
 
