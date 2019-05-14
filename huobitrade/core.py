@@ -443,6 +443,8 @@ class _HBWS(BaseWebsocket):
                                 logger.error(f'<请求回调>{msg["rep"]}的回调函数{cb.__name__}异常-{e}')
 
                     task = self._threadPool.submit(callbackThread, msg)
+                elif 'data' in msg:
+                    self.pub_msg(msg)
                     # _t = Thread(target=callbackThread, args=(msg, ))
                     # _t.setDaemon(True)
                     # _t.start()

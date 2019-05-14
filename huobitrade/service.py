@@ -96,7 +96,7 @@ class HBRestAPI(metaclass=Singleton):
         url = u.MARKET_URL + '/market/trade'
         return http_get_request(url, params, _async=_async)
 
-    def get_ticker(self, symbol, size=1, _async=False):
+    def get_tickers(self, symbol, size=1, _async=False):
         """
         获取历史ticker
         :param symbol:
@@ -680,9 +680,151 @@ class HBRestAPI(metaclass=Singleton):
 
         params = {}
         params['sub-uid'] = sub_id
-        path = '/v1/account/accounts/{sub-uid}'
+        path = f'/v1/account/accounts/{sub_uid}'
         return api_key_get(params, path, _async=_async)
 
+
+# class HBDerivativesRestAPI(metaclass=Singleton):
+#     def __init__(self, url='https://api.dm.huobi.br.com', keys=None, get_acc=False):
+#         """
+#         火币REST API封装
+#         :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
+#         :param keys: 传入(acess_key, secret_key),可用setKey设置
+#         """
+#         self.url = url
+#         if keys:
+#             setKey(*keys)
+#         if get_acc:
+#             try:
+#                 accounts = self.get_accounts()['data']
+#                 self.acc_id = self.get_accounts()['data'][0]['id']
+#                 if len(accounts) > 1:
+#                     warnings.warn(f'默认设置acc_id为{self.acc_id}')
+#             except Exception as e:
+#                 raise Exception(f'Failed to get account: key may not be set ->{e}')
+#
+#     def set_acc_id(self, acc_id):
+#         self.acc_id = acc_id
+#
+#     def __async_request_exception_handler(self, req, e):
+#         logger.error(f'async_request:{req}--exception:{e}')
+#
+#     def async_request(self, reqs:list)->list:
+#         """
+#         异步并发请求
+#         :param reqs: 请求列表
+#         :return:
+#         """
+#         result = (response.result() for response in reqs)
+#         ret = [r.json() if r.status_code == 200 else None for r in result]
+#         return ret
+#
+#     def get_contract_info(self, symbol=None, contract_type=None, contract_code=None, _async=False):
+#         """
+#         合约信息获取
+#         :param symbol:
+#         :param contract_type:
+#         :param contract_code:
+#         :param _async:
+#         :return:
+#         """
+#         params = {}
+#         if symbol:
+#             params['symbol'] = symbol
+#         if contract_type:
+#             params['contract_type'] = contract_type
+#         if contract_code:
+#             params['contract_code'] = contract_code
+#
+#         path = '/v1/contract_contract_info'
+#         url = self.url + path
+#         return http_get_request(url, params, _async=_async)
+#
+#
+#     def get_contract_index(self, symbol,  _async=False):
+#         """
+#         获取合约指数
+#         :param symbol:
+#         :param _async:
+#         :return:
+#         """
+#         params = {'symbol': symbol}
+#         path = '/v1/contract_index'
+#         url = self.url + path
+#         return http_get_request(url, params, _async=_async)
+#
+#     def get_price_limit(self, symbol=None, contract_type=None, contract_code=None, _async=False):
+#         """
+#         合约高低限价
+#         :param symbol:
+#         :param contract_type:
+#         :param contract_code:
+#         :param _async:
+#         :return:
+#         """
+#         params = {}
+#         if symbol:
+#             params['symbol'] = symbol
+#         if contract_type:
+#             params['contract_type'] = contract_type
+#         if contract_code:
+#             params['contract_code'] = contract_code
+#
+#         path = '/v1/contract_price_limit'
+#         url = self.url + path
+#         return http_get_request(url, params, _async=_async)
+#
+#         ...
+#     def get_open_interest(self):
+#         path = '/v1/contract_open_interest	'
+#         ...
+#     def get_last_depth(self):
+#         path = '/market/depth'
+#         ...
+#     def get_kline(self):
+#         path = '/market/history/kline'
+#         ...
+#     def get_last_1m_kline(self):
+#         path = '/market/detail/merged'
+#         ...
+#     def get_last_ticker(self):
+#         path = '/market/trade'
+#         ...
+#     def get_tickers(self):
+#         path = '/market/history/trade'
+#         ...
+#
+#     # -----------------需要鉴权------------------
+#     def get_accounts(self):
+#         path = '/v1/contract_account_info'
+#         ...
+#     def get_positions(self):
+#         path = '/v1/contract_position_info'
+#         ...
+#     def send_order(self):
+#         path = '/v1/contract_order'
+#         ...
+#     def batchcancel_orders(self):
+#         path = '/v1/contract_batchorder'
+#         ...
+#     def cancel_order(self):
+#         path = '/v1/contract_cancel'
+#         ...
+#     def cancel_all_orders(self):
+#         path = '/v1/contract_cancelall'
+#         ...
+#     def get_order_info(self):
+#         path = '/v1/contract_order_info'
+#         ...
+#     def get_order_detail(self):
+#         path = '/v1/contract_order_detail'
+#         ...
+#     def get_open_orders(self):
+#         path = '/v1/contract_openorders'
+#         ...
+#     def get_history_orders(self):
+#         path = '/v1/contract_hisorders'
+#         ...
 
 
 class HBRestAPI_DEC():
