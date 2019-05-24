@@ -118,8 +118,7 @@ class HBMarket:
     火币的市场数据类，快捷获取数据
     """
 
-    def __init__(self, site='Pro'):
-        self.site = site
+    def __init__(self):
         self.symbols = []
         self._update_symbols()
 
@@ -128,7 +127,7 @@ class HBMarket:
 
     def _update_symbols(self):
         global _api
-        _symbols = _api.get_symbols(self.site)
+        _symbols = _api.get_symbols()
         if _symbols['status'] == 'ok':
             for d in _symbols['data']:  # 获取交易对信息
                 name = d['base-currency'] + d['quote-currency']
@@ -150,12 +149,11 @@ class HBMarket:
 
 
 class HBOrder:
-    def __init__(self, acc_id, site):
+    def __init__(self, acc_id):
         self.acc_id = acc_id
-        self.site = site
 
     def send(self, amount, symbol, _type, price=0):
-        ret = _api.send_order(self.acc_id, amount, symbol, _type, price, site=self.site)
+        ret = _api.send_order(self.acc_id, amount, symbol, _type, price)
         logger.debug(f'send_order_ret:{ret}')
         if ret and ret['status'] == 'ok':
             return ret['data']
@@ -213,9 +211,8 @@ class HBOrder:
 
 
 class HBTrade:
-    def __init__(self, acc_id, site):
+    def __init__(self, acc_id):
         self.acc_id = acc_id
-        self.site = site
 
     def get_by_id(self, order_id):
         ret = _api.get_order_matchresults(order_id)
@@ -255,16 +252,16 @@ class HBAccount:
         try:
             args = item.split('_')
             if int(args[1]) in self.Detail.index.tolist():
-                if args[2] == 'balance':
-                    bal = HBBalance(args[1], args[0])
+                if args[0] == 'balance':
+                    bal = HBBalance(args[1])
                     setattr(self.__class__, item, bal)
                     return bal
-                elif args[2] == 'order':
-                    order = HBOrder(args[1], args[0])
+                elif args[0] == 'order':
+                    order = HBOrder(args[1])
                     setattr(self, item, order)
                     return order
-                elif args[2] == 'trade':
-                    trade = HBTrade(args[1], args[0])
+                elif args[0] == 'trade':
+                    trade = HBTrade(args[1])
                     setattr(self, item, trade)
                     return trade
                 else:
@@ -282,13 +279,12 @@ class HBAccount:
 
 
 class HBBalance:
-    def __init__(self, account_id, site):
+    def __init__(self, account_id):
         self.acc_id = account_id
-        self.site = site
         self.update()
 
     def update(self):
-        ret = _api.get_balance(self.acc_id, self.site)
+        ret = _api.get_balance(self.acc_id)
         if ret and ret['status'] == 'ok':
             data = ret['data']
             self.Id = data['id']
@@ -305,10 +301,10 @@ class HBBalance:
         return self
 
     def __repr__(self):
-        return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'
+        return f'<HBBalance>ID:{self.Id} Type:{self.Type} State:{self.State}'
 
     def __str__(self):
-        return f'<HBBalance: {self.site}>ID:{self.Id} Type:{self.Type} State:{self.State}'
+        return f'<HBBalance>ID:{self.Id} Type:{self.Type} State:{self.State}'
 
     def __getitem__(self, item):
         return self.Detail.loc[item]

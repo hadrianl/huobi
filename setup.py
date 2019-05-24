@@ -6,7 +6,7 @@
 # @Contact   : 137150224@qq.com
 
 from setuptools import setup, find_packages
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 
 with open("README.md", "r", encoding='utf-8') as rm:
     long_description = rm.read()

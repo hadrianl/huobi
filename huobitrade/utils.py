@@ -50,6 +50,21 @@ DEPTH = {
     5: 'step5'
 }
 
+DerivativesDEPTH = {
+    0: 'step0',
+    1: 'step1',
+    2: 'step2',
+    3: 'step3',
+    4: 'step4',
+    5: 'step5',
+    6: 'step6',
+    7: 'step7',
+    8: 'step8',
+    9: 'step9',
+    10: 'step10',
+    11: 'step11',
+}
+
 class Depth:
     Step0 = 'step0'
     Step1 = 'step1'
@@ -81,7 +96,9 @@ ORDER_TYPE = {
     'buy-limit': '限价买',
     'sell-limit': '限价卖',
     'buy-ioc': 'IOC买单',
-    'sell-ioc': 'IOC卖单'
+    'sell-ioc': 'IOC卖单',
+    'buy-limit-maker': '限价买入做市',
+    'sell-limit-maker': '限价卖出做市'
 }
 ORDER_STATES = {
     'pre-submitted': '准备提交',

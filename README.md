@@ -18,6 +18,10 @@
 - 深度数据则命名为depth
 
 ## Lastest
+- 暂未进行测试
+- 更改HBAccount的某些调用方法，主要是由于hadax没有之后，不在需要区分pro和hadax了
+- 加入合约的restful请求和websocket订阅
+- 删除实验性的HBRestAPI_DEC装饰器类
 - 新增huobitrade命令行工具，通过`huobitrade run`运行，详看[huobitrade CLI Tool](#21-huobitrade-cli-tool)
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
@@ -34,10 +38,9 @@
         - [2.2.1 WebSocket API](#221-websocket-api)
         - [2.2.2 Auth WebSocket API](#222-auth-websocket-api)
         - [2.3 Restful API](#23-restful-api)
-        - [2.4 Restful API-Decoration    （Experimental）](#24-restful-api-decorationexperimental)
-        - [2.5 Message Handler](#25-message-handler)
-        - [2.6 Latest Message Handler](#26-latest-message-handler)
-        - [2.7 HBData](#27-hbdata)
+        - [2.4 Message Handler](#25-message-handler)
+        - [2.5 Latest Message Handler](#26-latest-message-handler)
+        - [2.6 HBData](#27-hbdata)
     - [3. Extra](#3-extra)
 
 
@@ -145,24 +148,7 @@ for r in results:
     print(r)
 ```
 
-### 2.4 Restful API-Decoration（Experimental）
-- 用装饰器来初始化回调处理函数
-
-```python
-from huobitrade.service import HBRestAPI_DEC
-from huobitrade import setKey
-
-setKey('your acess_key', 'you secret_key')
-api_dec = HBRestAPI_DEC()
-@api_dec.get_kline('ethbtc', '1min')  # 装饰器初始化处理函数
-def handle_func(msg):
-    print('handle:', msg)
-
-handle_func()  # __call__调用函数会请求并用handle_func做回调处理
-
-```
-
-### 2.5 Message Handler
+### 2.4 Message Handler
 - handler是用来处理websocket的原始返回消息的，通过继承basehandler实现handle函数以及注册进HBWebsocket相关的topic来使用
 
 ```python
@@ -200,7 +186,7 @@ handler = DBHandler()  # topic为空的话，会对所有topic的msg做处理
 hb.register_handler(handler)
 ```
 
-### 2.6 Latest Message Handler
+### 2.5 Latest Message Handler
 - 基于handler函数根据策略复杂度和性能的的不同造成对message的处理时间不一样，可能造成快生产慢消费的情况，增加lastest参数，每次都是handle最新的message
 ```python
 from huobitrade.handler import BaseHandler
@@ -214,7 +200,7 @@ class MyLatestHandler(BaseHandler):
         print(topic, msg)
 ```
 
-### 2.7 HBData
+### 2.6 HBData
 - 使用类似topic的方式来取数据,topic的表达方式与火币有不同
 
 ```python
@@ -242,11 +228,11 @@ data.omgeth.ticker.last  # 最新的一条tick
 data.omgeth.ticker.last_20  # last_1至last_2000
 data.all_24h_kline  # 当前所有交易对的ticker
 account.Detail  # 所有账户明细
-account.Pro_XXXXX_balance  # XXXX为account_id,某账户的结余, 引用结余信息会自动更新
-account.Pro_XXXXX_order  # 某账户的订单类
-account.Pro_XXXXX_order['order_id']  # 查询某order明细,或者用get方法
-account.Pro_XXXXX_order.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
-account.Pro_XXXXX_trade.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
+account.balance_XXXX  # XXXX为account_id,某账户的结余, 引用结余信息会自动更新
+account.order_XXXX  # 某账户的订单类
+account.order_XXXX['order_id']  # 查询某order明细,或者用get方法
+account.order_XXXX.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
+account.trade_XXXX.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
 margin.transferIn('ethusdt', 'eth', 1)
 ethusdt_margin_info = margin['ethusdt']  # 或者用getBalance
 ethusdt_margin_info.balance  # ethusdt交易对的保证金结余信息
