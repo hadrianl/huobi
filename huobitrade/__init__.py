@@ -6,4 +6,4 @@
 # @Contact   : 137150224@qq.com
 
 from .utils import setKey, setUrl, logger
-from .service import HBRestAPI, HBWebsocket, HBRestAPI_DEC
+from .service import HBRestAPI, HBWebsocket
