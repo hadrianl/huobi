@@ -142,6 +142,9 @@ class HBMarket:
     def __str__(self):
         return f'<HBData>:{self.symbols}'
 
+    def __getitem__(self, item):
+        return getattr(self, item)
+
     def __getattr__(self, item):
         global _api
         if item == 'all_24h_kline':
@@ -210,6 +213,9 @@ class HBOrder:
         return self.get_by_id(item)
 
 
+
+
+
 class HBTrade:
     def __init__(self, acc_id):
         self.acc_id = acc_id
@@ -248,12 +254,17 @@ class HBAccount:
         else:
             raise Exception(f'get accounts request failed!--{ret}')
 
+        self._balances = {}
+        self._orders = {}
+        self._trades = {}
+
     def __getattr__(self, item):
         try:
             args = item.split('_')
             if int(args[1]) in self.Detail.index.tolist():
                 if args[0] == 'balance':
                     bal = HBBalance(args[1])
+                    self._balances[bal.acc_id] = bal
                     setattr(self.__class__, item, bal)
                     return bal
                 elif args[0] == 'order':
@@ -295,8 +306,8 @@ class HBBalance:
             raise Exception(f'get balance request failed--{ret}')
 
     def __get__(self, instance, owner):
-        bal = instance.__dict__.setdefault('balance', {})
-        bal[self.acc_id] = self
+        # bals = instance._balances
+        # bals[self.acc_id] = self
         self.update()
         return self
 
