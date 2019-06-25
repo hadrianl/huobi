@@ -165,7 +165,7 @@ class HBOrder:
             raise Exception(f'send order request failed!--{ret}')
 
     def __add__(self, order_params):
-        if isinstance(order_params, list):
+        if isinstance(order_params, Iterable):
             return self.send(*order_params)
 
         return self.send(order_params['acc_id'],
@@ -281,12 +281,12 @@ class HBAccount:
                     setattr(self.__class__, item, bal)
                     return bal
                 elif args[0] == 'order':
-                    order = HBOrder(args[1])
-                    setattr(self, item, order)
+                    order = HBOrder()
+                    setattr(self, 'order', order)
                     return order
                 elif args[0] == 'trade':
-                    trade = HBTrade(args[1])
-                    setattr(self, item, trade)
+                    trade = HBTrade()
+                    setattr(self, 'trade', trade)
                     return trade
                 else:
                     raise AttributeError

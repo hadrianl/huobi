@@ -5,7 +5,6 @@
 - restful api基本参照火币网的demo封装成`HBRestAPI`类
 - 兼容win，mac，linux，python版本必须3.6或以上，因为使用了大量的f***
 - 目前已经稳定使用，后续会基于框架提供如行情持久化，交易数据持久化等`handler`
-- 暂时先不维护`Restful API-Decoration`版，所以火币API8月份之后的修改将会导致其失效，有需求的小伙伴可以issues一波，再考虑去维护吧！
 - 有疑问或者需要支持和交流的小伙伴可以联系我， QQ：[137150224](http://wpa.qq.com/msgrd?v=3&uin=137150224&site=qq&menu=yes)
 - 鉴于小伙伴数量也越来越多，所以建个小群：859745469 ， 方便大家交流
 
@@ -18,11 +17,8 @@
 - 深度数据则命名为depth
 
 ## Lastest
-- 暂未进行测试
-- 更改HBAccount的某些调用方法，主要是由于hadax没有之后，不在需要区分pro和hadax了
-- 加入合约的restful请求和websocket订阅
-- 删除实验性的HBRestAPI_DEC装饰器类
-- 新增huobitrade命令行工具，通过`huobitrade run`运行，详看[huobitrade CLI Tool](#21-huobitrade-cli-tool)
+- 合约与现货已经进行了部分测试，保证可用性
+- 优化相关datatype
 
 [![PyPI](https://img.shields.io/pypi/v/huobitrade.svg)](https://pypi.org/project/huobitrade/)
 [![GitHub forks](https://img.shields.io/github/forks/hadrianl/huobi.svg)](https://github.com/hadrianl/huobi/network)
@@ -62,7 +58,7 @@ pip install huobitrade
     1. `setKey`是必要的，如果需要用到交易相关请求的话，只是请求行情的话可以不设。
     2. `HBRestAPI`是单例类，所以多次初始化也木有啥大问题，如在handler里面初始化
     3. 每个请求都有一个`_async`参数来提供异步请求，建议尽量使用它，具体用法是先初始化数个请求到一个list，再用`async_request`一次性向服务器发起请求
-    4. 子账户体系因为刚出，没用过，可能会有问题，有bug欢迎pr
+    4. 子账户体系没用过，可能会有问题，有bug欢迎pr
 - 另外还提供了几个简单易用的封装类
     1. `HBMarket`, `HBAccount`, `HBMargin`分别是行情，账户和借贷账户类，里面提供了大部分属性调用请求，均基于`HBRestAPI`
     2. 一般情景下应该是可以替代HBRestAPI的使用的
@@ -229,10 +225,15 @@ data.omgeth.ticker.last_20  # last_1至last_2000
 data.all_24h_kline  # 当前所有交易对的ticker
 account.Detail  # 所有账户明细
 account.balance_XXXX  # XXXX为account_id,某账户的结余, 引用结余信息会自动更新
-account.order_XXXX  # 某账户的订单类
-account.order_XXXX['order_id']  # 查询某order明细,或者用get方法
-account.order_XXXX.send(1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
-account.trade_XXXX.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
+account.order  # 账户的订单类
+account.order['order_id']  # 查询某order明细,或者用get方法
+account.order.send('account_id', 1, 'omgeth', 'buy-limit', 0.001666)  # 发送订单
+account.order.batchcancel(['order_id1', 'order_id2'])
+account.order + [1, 'omgeth', 'buy-limit', 0.001666] # 发送订单
+account.order + {'acc_id': 'your_account_id', 'amount': 1, 'symbol': 'omgeth', 'type': 'buy-limit', 'price': 0.001666}
+account.order - 'order_id'  # 取消订单
+account.order - ['order_id1', 'order_id2'] # 批量取消订单
+account.trade.get_by_id('order_id')  # 某账户的成交类(即火币的matchresults),也可以直接索引
 margin.transferIn('ethusdt', 'eth', 1)
 ethusdt_margin_info = margin['ethusdt']  # 或者用getBalance
 ethusdt_margin_info.balance  # ethusdt交易对的保证金结余信息
