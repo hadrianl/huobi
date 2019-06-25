@@ -144,17 +144,18 @@ zmq_ctx = zmq.Context()
 async_session = FuturesSession(max_workers=8)
 
 # API 请求地址
+DEFAULT_URL = 'https://api.huobi.br.com'
+DEFAULT_DM_URL = 'https://api.hbdm.com'
 MARKET_URL = 'https://api.huobi.br.com'
 TRADE_URL = 'https://api.huobi.br.com'
 
 ACCOUNT_ID = None
 
 
-def setKey(access_key, secret_key, private_key=None):
+def setKey(access_key, secret_key):
     global ACCESS_KEY, SECRET_KEY, PRIVATE_KEY
     ACCESS_KEY = access_key
     SECRET_KEY = secret_key
-    PRIVATE_KEY = private_key
 
 def setUrl(market_url, trade_url):
     global MARKET_URL, TRADE_URL
@@ -212,15 +213,15 @@ def http_get_request(url, params, add_to_headers=None, _async=False):
         response = async_session.get(url, params=postdata, headers=headers, timeout=5)
         return response
     else:
-        response = requests.get(url, postdata, headers=headers, timeout=5)
         try:
+            response = requests.get(url, postdata, headers=headers, timeout=5)
             if response.status_code == 200:
                 return response.json()
             else:
                 logger.debug(
                     f'<GET>error_code:{response.status_code}  reason:{response.reason} detail:{response.text}')
                 return
-        except BaseException as e:
+        except Exception as e:
             logger.exception(f'<GET>httpGet failed, detail is:{response.text},{e}')
             return
 
@@ -244,21 +245,20 @@ def http_post_request(url, params, add_to_headers=None, _async=False):
         response = async_session.post(url, postdata, headers=headers, timeout=10)
         return response
     else:
-        response = requests.post(url, postdata, headers=headers, timeout=10)
         try:
-
+            response = requests.post(url, postdata, headers=headers, timeout=10)
             if response.status_code == 200:
                 return response.json()
             else:
                 logger.debug(f'<POST>error_code:{response.status_code}  reason:{response.reason} detail:{response.text}')
                 return
-        except BaseException as e:
+        except Exception as e:
             logger.exception(
                 f'<POST>httpPost failed, detail is:{response.text},{e}')
             return
 
 
-def api_key_get(params, request_path, _async=False):
+def api_key_get(params, request_path, _async=False, url=None):
     """
     from 火币demo, 构造get请求并调用get方法
     :param params:
@@ -274,19 +274,17 @@ def api_key_get(params, request_path, _async=False):
         'Timestamp': timestamp
     })
 
-    host_url = TRADE_URL
-    host_name = urllib.parse.urlparse(host_url).hostname
-    host_name = host_name.lower()
+    host_url = DEFAULT_URL if url is None else url
+    host_name = urllib.parse.urlparse(host_url).hostname.lower()
     secret_sign = createSign(params, method, host_name, request_path,
                                      SECRET_KEY)
     params['Signature'] = secret_sign
-    if PRIVATE_KEY:
-        params['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
+
     url = host_url + request_path
     return http_get_request(url, params, _async=_async)
 
 
-def api_key_post(params, request_path, _async=False):
+def api_key_post(params, request_path, _async=False, url=None):
     """
     from 火币demo, 构造post请求并调用post方法
     :param params:
@@ -302,15 +300,13 @@ def api_key_post(params, request_path, _async=False):
         'Timestamp': timestamp
     }
 
-    host_url = TRADE_URL
-    host_name = urllib.parse.urlparse(host_url).hostname
-    host_name = host_name.lower()
+    host_url = DEFAULT_URL if url is None else url
+    host_name = urllib.parse.urlparse(host_url).hostname.lower()
     secret_sign = createSign(params_to_sign, method, host_name,
                                              request_path, SECRET_KEY)
     params_to_sign['Signature'] = secret_sign
-    if PRIVATE_KEY:
-        params_to_sign['PrivateSignature'] = createPrivateSign(secret_sign, PRIVATE_KEY)
-    url = host_url + request_path + '?' + urllib.parse.urlencode(params_to_sign)
+
+    url = ''.join([host_url, request_path , '?', urllib.parse.urlencode(params_to_sign)])
     return http_post_request(url, params, _async=_async)
 
 

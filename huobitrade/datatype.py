@@ -9,6 +9,7 @@ import pandas as pd
 from .service import HBRestAPI
 from .utils import PERIOD, DEPTH, logger
 from itertools import chain
+from typing import Iterable
 
 __all__ = ['HBMarket', 'HBAccount', 'HBMargin']
 _api = HBRestAPI(get_acc=True)
@@ -82,7 +83,7 @@ class HBTicker:
         elif 'last' in item:
             args = item.split('_')
             size = int(args[1])
-            reply = _api.get_ticker(self.__symbol, size)
+            reply = _api.get_tickers(self.__symbol, size)
             ticker_list = [
                 t for t in chain(*[i['data'] for i in reply['data']])
             ]
@@ -152,16 +153,26 @@ class HBMarket:
 
 
 class HBOrder:
-    def __init__(self, acc_id):
-        self.acc_id = acc_id
+    def __init__(self):
+        ...
 
-    def send(self, amount, symbol, _type, price=0):
-        ret = _api.send_order(self.acc_id, amount, symbol, _type, price)
+    def send(self, acc_id, amount, symbol, _type, price=0):
+        ret = _api.send_order(acc_id, amount, symbol, _type, price)
         logger.debug(f'send_order_ret:{ret}')
         if ret and ret['status'] == 'ok':
             return ret['data']
         else:
             raise Exception(f'send order request failed!--{ret}')
+
+    def __add__(self, order_params):
+        if isinstance(order_params, list):
+            return self.send(*order_params)
+
+        return self.send(order_params['acc_id'],
+                         order_params['amount'],
+                         order_params['symbol'],
+                         order_params['type'],
+                         order_params['price'])
 
     def cancel(self, order_id):
         ret = _api.cancel_order(order_id)
@@ -170,6 +181,11 @@ class HBOrder:
             return ret['data']
         else:
             raise Exception(f'cancel order request failed!--{ret}')
+
+    def __sub__(self, oid_or_list):
+        if isinstance(oid_or_list, Iterable):
+            return self.batchcancel(oid_or_list)
+        return self.cancel(oid_or_list)
 
     def batchcancel(self, order_ids:list):
         ret = _api.batchcancel_order(order_ids)
@@ -213,12 +229,9 @@ class HBOrder:
         return self.get_by_id(item)
 
 
-
-
-
 class HBTrade:
-    def __init__(self, acc_id):
-        self.acc_id = acc_id
+    def __init__(self):
+        ...
 
     def get_by_id(self, order_id):
         ret = _api.get_order_matchresults(order_id)

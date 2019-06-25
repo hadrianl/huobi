@@ -873,7 +873,7 @@ class _DerivativesAuthWS(BaseWebsocket):
                 # _t.start()
             elif op == 'auth':
                 logger.info(
-                    f'<鉴权>鉴权成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)} #{msg["cid"]}#')
+                    f'<鉴权>鉴权成功 Time:{dt.datetime.fromtimestamp(msg["ts"] / 1000)}')
                 for cb in self._auth_callbacks:
                     cb()
 

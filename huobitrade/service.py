@@ -8,8 +8,9 @@
 
 from . import utils as u
 from .utils import logger, api_key_get, api_key_post, http_get_request, setUrl, setKey, Singleton
+from .utils import DEFAULT_URL, DEFAULT_DM_URL
 from dateutil import parser
-from functools import wraps
+# from functools import wraps
 import datetime as dt
 from .core import _AuthWS, _HBWS, _DerivativesAuthWS, _HBDerivativesWS
 import warnings
@@ -31,14 +32,14 @@ def HBWebsocket(host='api.huobi.br.com', auth=False, isDerivatives=False, reconn
 
 
 class HBRestAPI(metaclass=Singleton):
-    def __init__(self, addrs=None, keys=None, get_acc=False):
+    def __init__(self, url=None, keys=None, get_acc=False):
         """
         火币REST API封装
-        :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
+        :param url: 传入url，若为None，默认是https://api.huobi.br.com
         :param keys: 传入(acess_key, secret_key),可用setKey设置
         """
-        if addrs:
-            setUrl(*addrs)
+        self.url = url if url else DEFAULT_URL
+
         if keys:
             setKey(*keys)
         if get_acc:
@@ -76,7 +77,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol, 'period': period, 'size': size}
 
-        url = u.MARKET_URL + '/market/history/kline'
+        url = self.url + '/market/history/kline'
         return http_get_request(url, params, _async=_async)
 
     def get_last_depth(self, symbol, _type, _async=False):
@@ -88,7 +89,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol, 'type': _type}
 
-        url = u.MARKET_URL + '/market/depth'
+        url = self.url + '/market/depth'
         return http_get_request(url, params, _async=_async)
 
     def get_last_ticker(self, symbol, _async=False):
@@ -99,7 +100,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol}
 
-        url = u.MARKET_URL + '/market/trade'
+        url = self.url + '/market/trade'
         return http_get_request(url, params, _async=_async)
 
     def get_tickers(self, symbol, size=1, _async=False):
@@ -111,7 +112,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol, 'size': size}
 
-        url = u.MARKET_URL + '/market/history/trade'
+        url = self.url + '/market/history/trade'
         return http_get_request(url, params, _async=_async)
 
     def get_all_last_24h_kline(self, _async=False):
@@ -121,7 +122,7 @@ class HBRestAPI(metaclass=Singleton):
         :return:
         """
         params = {}
-        url = u.MARKET_URL + '/market/tickers'
+        url = self.url + '/market/tickers'
         return http_get_request(url, params, _async=_async)
 
     def get_last_1m_kline(self, symbol, _async=False):
@@ -132,7 +133,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol}
 
-        url = u.MARKET_URL + '/market/detail/merged'
+        url = self.url + '/market/detail/merged'
         return http_get_request(url, params, _async=_async)
 
     def get_last_24h_kline(self, symbol, _async=False):
@@ -143,7 +144,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol}
 
-        url = u.MARKET_URL + '/market/detail'
+        url = self.url + '/market/detail'
         return http_get_request(url, params, _async=_async)
 
     def get_symbols(self, _async=False):
@@ -153,7 +154,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/common/symbols'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_currencys(self, _async=False):
         """
@@ -162,12 +163,12 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/common/currencys'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_timestamp(self, _async=False):
         params = {}
         path = '/v1/common/timestamp'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     '''
     Trade/Account API
@@ -179,7 +180,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         path = '/v1/account/accounts'
         params = {}
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_balance(self, acc_id=None, _async=False):
         """
@@ -190,7 +191,7 @@ class HBRestAPI(metaclass=Singleton):
         path = f'/v1/account/accounts/{acc_id}/balance'
         # params = {'account-id': self.acct_id}
         params = {}
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def send_order(self, acc_id, amount, symbol, _type, price=0, _async=False):
         """
@@ -215,7 +216,7 @@ class HBRestAPI(metaclass=Singleton):
             params['price'] = price
 
         path = f'/v1/order/orders/place'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def cancel_order(self, order_id, _async=False):
         """
@@ -225,7 +226,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/order/orders/{order_id}/submitcancel'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def batchcancel_orders(self, order_ids: list, _async=False):
         """
@@ -236,7 +237,7 @@ class HBRestAPI(metaclass=Singleton):
         assert isinstance(order_ids, list)
         params = {'order-ids': order_ids}
         path = f'/v1/order/orders/batchcancel'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def batchcancel_openOrders(self, acc_id, symbol=None, side=None, size=None, _async=False):
         """
@@ -260,7 +261,7 @@ class HBRestAPI(metaclass=Singleton):
         if size:
             params['size'] = size
 
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
 
     def get_order_info(self, order_id, _async=False):
@@ -271,7 +272,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/order/orders/{order_id}'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_openOrders(self, acc_id=None, symbol=None, side=None, size=None, _async=False):
         """
@@ -293,7 +294,7 @@ class HBRestAPI(metaclass=Singleton):
         if size:
             params['size'] = size
 
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_order_matchresults(self, order_id, _async=False):
         """
@@ -303,7 +304,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = f'/v1/order/orders/{order_id}/matchresults'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_orders_info(self,
                         symbol,
@@ -346,7 +347,7 @@ class HBRestAPI(metaclass=Singleton):
         if size:
             params['size'] = size
         path = '/v1/order/orders'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_recent48hours_order_info(self,
                                      symbol=None,
@@ -389,7 +390,7 @@ class HBRestAPI(metaclass=Singleton):
             params['size'] = size
 
         path = '/v1/order/history'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
 
     def get_orders_matchresults(self,
@@ -429,7 +430,7 @@ class HBRestAPI(metaclass=Singleton):
         if size:
             params['size'] = size
         path = '/v1/order/matchresults'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def req_withdraw(self, address, amount, currency, fee=0, addr_tag="", _async=False):
         """
@@ -453,7 +454,7 @@ class HBRestAPI(metaclass=Singleton):
         }
         path = '/v1/dw/withdraw/api/create'
 
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def cancel_withdraw(self, withdraw_id, _async=False):
         """
@@ -467,7 +468,7 @@ class HBRestAPI(metaclass=Singleton):
         params = {}
         path = f'/v1/dw/withdraw-virtual/{withdraw_id}/cancel'
 
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_deposit_withdraw_record(self, currency, _type, _from, size, _async=False):
         """
@@ -486,7 +487,7 @@ class HBRestAPI(metaclass=Singleton):
             'size': size
         }
         path = '/v1/query/deposit-withdraw'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     '''
     借贷API
@@ -513,7 +514,7 @@ class HBRestAPI(metaclass=Singleton):
             params['price'] = price
 
         path = '/v1/order/orders/place'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def exchange_to_margin(self, symbol, currency, amount, _async=False):
         """
@@ -526,7 +527,7 @@ class HBRestAPI(metaclass=Singleton):
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-in/margin'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def margin_to_exchange(self, symbol, currency, amount, _async=False):
         """
@@ -539,7 +540,7 @@ class HBRestAPI(metaclass=Singleton):
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
 
         path = '/v1/dw/transfer-out/margin'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def apply_loan(self, symbol, currency, amount, _async=False):
         """
@@ -551,7 +552,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'symbol': symbol, 'currency': currency, 'amount': amount}
         path = '/v1/margin/orders'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def repay_loan(self, order_id, amount, _async=False):
         """
@@ -562,7 +563,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {'order-id': order_id, 'amount': amount}
         path = f'/v1/margin/orders/{order_id}/repay'
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_loan_orders(self,
                         symbol,
@@ -590,7 +591,7 @@ class HBRestAPI(metaclass=Singleton):
         if size:
             params['size'] = size
         path = '/v1/margin/loan-orders'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_margin_balance(self, symbol=None, _async=False):
         """
@@ -603,7 +604,7 @@ class HBRestAPI(metaclass=Singleton):
         if symbol:
             params['symbol'] = symbol
 
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_etf_config(self, etf_name, _async=False):
         """
@@ -616,7 +617,7 @@ class HBRestAPI(metaclass=Singleton):
         path = '/etf/swap/config'
         params['etf_name'] = etf_name
 
-        return api_key_get(params, path,  _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def etf_swap_in(self, etf_name, amount, _async=False):
         """
@@ -632,7 +633,7 @@ class HBRestAPI(metaclass=Singleton):
         params['etf_name'] = etf_name
         params['amount'] = amount
 
-        return api_key_post(params, path,  _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def etf_swap_out(self, etf_name, amount, _async=False):
         """
@@ -648,7 +649,7 @@ class HBRestAPI(metaclass=Singleton):
         params['etf_name'] = etf_name
         params['amount'] = amount
 
-        return api_key_post(params, path,  _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_etf_records(self, etf_name, offset, limit, _async=False):
         """
@@ -665,7 +666,7 @@ class HBRestAPI(metaclass=Singleton):
         params['offset'] = offset
         params['limit'] = limit
 
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_quotation_kline(self, symbol, period, limit=None, _async=False):
         """
@@ -683,7 +684,7 @@ class HBRestAPI(metaclass=Singleton):
         if limit:
             params['limit'] = limit
 
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def transfer(self, sub_uid, currency, amount, transfer_type, _async=False):
         """
@@ -702,7 +703,7 @@ class HBRestAPI(metaclass=Singleton):
         params['amount'] = amount
         params['type'] = transfer_type
 
-        return api_key_post(params, path, _async=_async)
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_aggregate_balance(self, _async=False):
         """
@@ -712,7 +713,7 @@ class HBRestAPI(metaclass=Singleton):
         """
         params = {}
         path = '/v1/subuser/aggregate-balance'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
     def get_sub_balance(self, sub_uid, _async=False):
         """
@@ -725,17 +726,18 @@ class HBRestAPI(metaclass=Singleton):
         params = {}
         params['sub-uid'] = sub_uid
         path = f'/v1/account/accounts/{sub_uid}'
-        return api_key_get(params, path, _async=_async)
+        return api_key_get(params, path, _async=_async, url=self.url)
 
 
 class HBDerivativesRestAPI(metaclass=Singleton):
-    def __init__(self, url='https://api.dm.huobi.br.com', keys=None, get_acc=False):
+    def __init__(self, url=None, keys=None, get_acc=False):
         """
-        火币REST API封装
-        :param addrs: 传入(market_url, trade_url)，若为None，默认是https://api.huobi.br.com
+        火币合约REST API封装
+        :param url: 传入url，若为None，默认是https://api.hbdm.com
         :param keys: 传入(acess_key, secret_key),可用setKey设置
         """
-        self.url = url
+        self.url = url if url else DEFAULT_DM_URL
+
         if keys:
             setKey(*keys)
         if get_acc:
@@ -928,8 +930,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['symbol'] = symbol
 
         path = '/api/v1/contract_account_info'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_positions(self, symbol=None, _async=False):
         """
@@ -943,8 +945,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['symbol'] = symbol
 
         path = '/api/v1/contract_position_info'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     @staticmethod
     def create_order_params(*,
@@ -1001,8 +1003,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
         """
 
         path = '/api/v1/contract_order'
-        url = self.url + path
-        return api_key_post(url, order_params, _async=_async)
+
+        return api_key_post(order_params, path, _async=_async, url=self.url)
 
     def batchcancel_orders(self, order_params_list:list, _async=False):
         """
@@ -1012,8 +1014,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
         :return:
         """
         path = '/api/v1/contract_batchorder'
-        url = self.url + path
-        return api_key_post(url, order_params_list, _async=_async)
+
+        return api_key_post(order_params_list, path, _async=_async, url=self.url)
 
     def cancel_order(self, symbol, order_ids:list=None, client_order_ids: list=None, _async=False):
         """
@@ -1033,8 +1035,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['client_order_id'] = ','.join(client_order_ids)
 
         path = '/api/v1/contract_cancel'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def cancel_all_orders(self, symbol, contract_code=None, contract_type=None, _async=False):
         """
@@ -1052,9 +1054,10 @@ class HBDerivativesRestAPI(metaclass=Singleton):
 
         if contract_type:
             params['contract_type'] = contract_type
+
         path = '/api/v1/contract_cancelall'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_order_info(self,symbol, order_ids:list=None, client_order_ids: list=None, _async=False):
         """
@@ -1072,9 +1075,10 @@ class HBDerivativesRestAPI(metaclass=Singleton):
 
         if client_order_ids:
             params['client_order_id'] = ','.join(client_order_ids)
+
         path = '/api/v1/contract_order_info'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_order_detail(self, symbol, order_id, create_at, order_type,
                          page_index=None, page_size=20, _async=False):
@@ -1103,8 +1107,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
         params['create_at'] = create_at
 
         path = '/api/v1/contract_order_detail'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_open_orders(self, symbol, page_index=None, page_size=20, _async=False):
         """
@@ -1120,8 +1124,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['page_index'] = page_index
 
         path = '/api/v1/contract_openorders'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_history_orders(self, symbol, trade_type, _type, status, create_date,
                            page_index=None, page_size=20, _async=False):
@@ -1143,8 +1147,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['page_index'] = page_index
 
         path = '/api/v1/contract_hisorders'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def get_order_matchresults(self, symbol, trade_type, create_date,
                                page_index=None, page_size=20, _async=False):
@@ -1164,8 +1168,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['page_index'] = page_index
 
         path = '/api/v1/contract_matchresults'
-        url = self.url + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url=self.url)
 
     def transfer_futures(self, currency, amount, _type, _async=False):
         """
@@ -1178,8 +1182,8 @@ class HBDerivativesRestAPI(metaclass=Singleton):
         """
         params = {'currency': currency, 'amount': amount, 'type': _type}
         path = '/v1/futures/transfer'
-        url = 'https://api.huobi.pro' + path
-        return api_key_post(url, params, _async=_async)
+
+        return api_key_post(params, path, _async=_async, url='https://api.huobi.pro')
 
 
 # class HBRestAPI_DEC():
