@@ -730,7 +730,7 @@ class HBRestAPI(metaclass=Singleton):
 
 
 class HBDerivativesRestAPI(metaclass=Singleton):
-    def __init__(self, url=None, keys=None, get_acc=False):
+    def __init__(self, url=None, keys=None):
         """
         火币合约REST API封装
         :param url: 传入url，若为None，默认是https://api.hbdm.com
@@ -740,17 +740,7 @@ class HBDerivativesRestAPI(metaclass=Singleton):
 
         if keys:
             setKey(*keys)
-        if get_acc:
-            try:
-                accounts = self.get_accounts()['data']
-                self.acc_id = self.get_accounts()['data'][0]['id']
-                if len(accounts) > 1:
-                    warnings.warn(f'默认设置acc_id为{self.acc_id}')
-            except Exception as e:
-                raise Exception(f'Failed to get account: key may not be set ->{e}')
 
-    def set_acc_id(self, acc_id):
-        self.acc_id = acc_id
 
     def __async_request_exception_handler(self, req, e):
         logger.error(f'async_request:{req}--exception:{e}')
