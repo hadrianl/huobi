@@ -819,7 +819,7 @@ class HBDerivativesRestAPI(metaclass=Singleton):
         :return:
         """
         params = {'symbol': symbol}
-        path = 'api/v1/contract_delivery_price'
+        path = '/api/v1/contract_delivery_price'
         url = self.url + path
         return http_get_request(url, params, _async=_async)
 
@@ -839,7 +839,7 @@ class HBDerivativesRestAPI(metaclass=Singleton):
             params['contract_type'] = contract_type
         if contract_code:
             params['contract_code'] = contract_code
-        path = 'api/v1/contract_open_interest'
+        path = '/api/v1/contract_open_interest'
         url = self.url + path
         return http_get_request(url, params, _async=_async)
 
